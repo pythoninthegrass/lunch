@@ -157,11 +157,24 @@ def index():
                     hx_post="/roll",
                     hx_include="[name='option']",
                     hx_target="#result",
+                    hx_swap_oob="true",
                     style="margin: 0 0.5rem 1rem;",
                 ),
-                Button("Add Restaurant", hx_get="/add-form", hx_target="#form-area", style="margin: 0 0.5rem 1rem;"),
-                Button("Delete Restaurant", hx_get="/delete-form", hx_target="#form-area", style="margin: 0 0.5rem 1rem;"),
-                Button("List All", hx_get="/list", hx_target="#result", style="margin-bottom: 1rem;"),
+                Button(
+                    "Add Restaurant",
+                    hx_get="/add-form",
+                    hx_target="#form-area",
+                    hx_swap_oob="true",
+                    style="margin: 0 0.5rem 1rem;",
+                ),
+                Button(
+                    "Delete Restaurant",
+                    hx_get="/delete-form",
+                    hx_target="#form-area",
+                    hx_swap_oob="true",
+                    style="margin: 0 0.5rem 1rem;",
+                ),
+                Button("List All", hx_get="/list", hx_target="#result", hx_swap_oob="true", style="margin-bottom: 1rem;"),
                 style="text-align: center;",
             ),
             Div(id="result", style="margin-top: 1rem; text-align: center;"),
@@ -174,52 +187,68 @@ def index():
 @rt('/roll')
 def roll(option: str):
     restaurant = rng_restaurant(option)
-    if restaurant:
-        return P(f"Today's {option} lunch is at: {restaurant}", cls="text-xl")
-    return P("No restaurants found for that option!", cls="text-red-500")
+    return Div(
+        P(f"Today's {option} lunch is at: {restaurant}", cls="text-xl")
+        if restaurant
+        else P("No restaurants found for that option!", cls="text-red-500"),
+        Div(hx_swap_oob="true", id="form-area"),
+    )
 
 
 @rt('/list')
 @db_session
 def list():
-    restaurants = select((r.restaurant, r.option) for r in LunchList) \
-        .order_by(lambda r1, r2: r1[0] > r2[0])[:]
-    if not restaurants:
-        return P("No restaurants found!", cls="text-red-500")
-
-    return (
+    restaurants = select((r.restaurant, r.option) for r in LunchList).order_by(lambda r1, r2: r1[0] > r2[0])[:]
+    return Div(
         Div(
             H2("All Restaurants"),
             Table(
-                Tr(Th("Restaurant"), Th("Type")),
-                *[Tr(Td(name), Td(option.title())) for name, option in restaurants],
-                cls="table"
+                Tr(Th("Restaurant"), Th("Type")), *[Tr(Td(name), Td(option.title())) for name, option in restaurants], cls="table"
             )
-        )
-    )
-
-
-@rt('/add-form')
-def add_form():
-    return Form(
-        H3("Add Restaurant"),
-        Input(name="name", placeholder="Restaurant name", required=True),
-        Input(type="radio", name="option", value="cheap", id="add-cheap", checked=True),
-        Label("Cheap", for_="add-cheap"),
-        Input(type="radio", name="option", value="normal", id="add-normal"),
-        Label("Normal", for_="add-normal"),
-        Button("Add", type="submit"),
-        hx_post="/add",
-        hx_target="#result",
+            if restaurants
+            else P("No restaurants found!", cls="text-red-500"),
+        ),
+        Div(hx_swap_oob="true", id="form-area"),
     )
 
 
 @rt('/add')
 def add(name: str, option: str):
     result = add_restaurant(name, option)
-    if result is False:
-        return P(f"{name} already exists!", cls="text-red-500")
-    return P(f"Added {name}!", cls="text-green-500")
+    return Div(
+        P(f"{name} already exists!", cls="text-red-500") if result is False else P(f"Added {name}!", cls="text-green-500"),
+        Div(hx_swap_oob="true", id="form-area"),
+    )
+
+
+@rt('/delete')
+def post(name: str):
+    result = delete_restaurant(name)
+    return Div(
+        P("Restaurant not found!", cls="text-red-500") if result is None else P(f"{name} deleted!", cls="text-green-500"),
+        Div(hx_swap_oob="true", id="form-area"),
+    )
+
+
+@rt('/add-form')
+def add_form():
+    return Form(
+        H3("Add Restaurant", style="margin-bottom: 1rem;"),
+        Div(
+            Input(name="name", placeholder="Restaurant name", required=True, style="margin-bottom: 1rem; width: 100%;"),
+            Div(
+                Input(type="radio", name="option", value="cheap", id="add-cheap", checked=True),
+                Label("Cheap", for_="add-cheap", style="margin-right: 1rem;"),
+                Input(type="radio", name="option", value="normal", id="add-normal"),
+                Label("Normal", for_="add-normal"),
+                style="text-align: center; margin-bottom: 1rem;",
+            ),
+            Button("Add", type="submit", style="width: 100%;"),
+            style="display: flex; flex-direction: column; align-items: center;",
+        ),
+        hx_post="/add",
+        hx_target="#result",
+    )
 
 
 @rt('/delete-form')
@@ -235,14 +264,6 @@ def delete_form():
         hx_post="/delete",
         hx_target="#result",
     )
-
-
-@rt('/delete')
-def post(name: str):
-    result = delete_restaurant(name)
-    if result is None:
-        return P("Restaurant not found!", cls="text-red-500")
-    return P(f"{name} deleted!", cls="text-green-500")
 
 
 if __name__ == '__main__':
