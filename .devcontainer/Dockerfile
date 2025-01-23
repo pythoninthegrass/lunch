@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1.6
+# syntax=docker/dockerfile:1.7.0
 
 # full semver just for python base image
 ARG PYTHON_VERSION=3.11.4
