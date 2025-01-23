@@ -162,28 +162,47 @@ Handles formatting of files. [Install the editorconfig plugin](https://editorcon
 
 ## TODO
 
-* Use Tauri instead of Flet
-* QA
-  * Desktop
-    * macOS: `native` form input is broken bc `pywebview`
+* Build
+  * justfile -> taskfile
+* UI/UX
+  * Fix padding between buttons
+  * Move "logo" to top left of container
+* Package
+  * Web
+    * Fly.io
+    * Self-host
+  * Desktop [Tauri](https://v1.tauri.app/) 
+    * macOS
     * Linux
     * Windows
-  * Mobile
+  * Mobile (TBD)
     * iOS
     * Android
-* Document
-* ~~Convert to ~~PySimpleGUI~~ NiceGUI~~
+* Test
+  * Unit tests
+  * Integration tests
+  * E2E tests
+* CI/CD
+  * Docker
+  * GitHub Actions
+    * semver
+      * [release-please](https://github.com/marketplace/actions/release-please-action)
+    * Lint
+    * Format
+    * Run tests
+    * Build
+  * ArgoCD / Flux
 * Extend
-  * [semantic-release](https://github.com/semantic-release/semantic-release)
   * sqlite -> ~~postgres~~ [Litestream](https://litestream.io/) / [Turso](https://turso.tech/)
   * Fancy category
   * Images
   * Menus
   * API calls to Yelp, Google, etc.
   * Tinder swipe right/left mechanic hehehe
+* Document
 
 ## Further Reading
 
-[Python Poetry, finally easy build and deploy packages | by Jose Alberto Torres Agüera | Lambda Automotive | Medium](https://medium.com/lambda-automotive/python-poetry-finally-easy-build-and-deploy-packages-e1e84c23401f)  
-
-[Python 101: Developing Package with Poetry | by Julio Anthony Leonard | Bootcampers | Medium](https://medium.com/bootcampers/python-101-developing-package-with-poetry-449c57690350)
+* [FastHTML](https://fastht.ml/)
+* [Python Poetry, finally easy build and deploy packages | by Jose Alberto Torres Agüera | Lambda Automotive | Medium](https://medium.com/lambda-automotive/python-poetry-finally-easy-build-and-deploy-packages-e1e84c23401f)  
+* [Python 101: Developing Package with Poetry | by Julio Anthony Leonard | Bootcampers | Medium](https://medium.com/bootcampers/python-101-developing-package-with-poetry-449c57690350)
