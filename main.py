@@ -180,12 +180,23 @@ def roll(option: str):
 
 
 @rt('/list')
+@db_session
 def list():
-    restaurants = get_all_restaurants()
+    restaurants = select((r.restaurant, r.option) for r in LunchList) \
+        .order_by(lambda r1, r2: r1[0] > r2[0])[:]
     if not restaurants:
         return P("No restaurants found!", cls="text-red-500")
 
-    return Div(H2("All Restaurants"), Ul(cls="list-disc pl-8")(*[Li(f"{r}") for r in restaurants]))
+    return (
+        Div(
+            H2("All Restaurants"),
+            Table(
+                Tr(Th("Restaurant"), Th("Type")),
+                *[Tr(Td(name), Td(option.title())) for name, option in restaurants],
+                cls="table"
+            )
+        )
+    )
 
 
 @rt('/add-form')
