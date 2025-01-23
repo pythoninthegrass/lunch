@@ -16,7 +16,7 @@
 
 ```bash
 # clone repo
-git clone https://github.com/xBromsson/marley.git
+git clone https://github.com/pythoninthegrass/lunch.git
 
 # change directory
 cd lunch/
@@ -59,7 +59,7 @@ Additional tooling includes but is not limited to:
     asdf plugin-add python
 
     # install stable python
-    asdf install python <latest|3.11.4>
+    asdf install python <latest|3.11.11>
 
     # set stable to system python
     asdf global python latest
@@ -68,7 +68,7 @@ Additional tooling includes but is not limited to:
     asdf plugin-add poetry https://github.com/asdf-community/asdf-poetry.git
 
     # install latest version via asdf
-    asdf install poetry <latest|1.5.1>
+    asdf install poetry <latest|2.0.1>
 
     # set latest version as default
     asdf global poetry latest
@@ -162,6 +162,7 @@ Handles formatting of files. [Install the editorconfig plugin](https://editorcon
 
 ## TODO
 
+* Use Tauri instead of Flet
 * QA
   * Desktop
     * macOS: `native` form input is broken bc `pywebview`
@@ -174,7 +175,7 @@ Handles formatting of files. [Install the editorconfig plugin](https://editorcon
 * ~~Convert to ~~PySimpleGUI~~ NiceGUI~~
 * Extend
   * [semantic-release](https://github.com/semantic-release/semantic-release)
-  * sqlite -> postgres
+  * sqlite -> ~~postgres~~ [Litestream](https://litestream.io/) / [Turso](https://turso.tech/)
   * Fancy category
   * Images
   * Menus
