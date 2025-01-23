@@ -15,9 +15,6 @@ python = ">=3.11,<3.13"
 pony = "^0.7.19"
 python-decouple = "^3.8"
 python-fasthtml = "^0.12.0"
-pywebview = "^4.4.1"
-sqlacodegen = "^2.3.0.post1"
-sqlmodel = "^0.0.8"
 
 [tool.poetry.group.dev.dependencies]
 argcomplete = "^3.5.3"
@@ -28,7 +25,6 @@ pre-commit = "^3.8.0"
 pyclean = "^3.1.0"
 rich = "^13.9.4"
 ruff = "^0.6.9"
-tk = "^0.1.0"
 
 [tool.poetry.group.test.dependencies]
 coverage = "^7.6.10"
