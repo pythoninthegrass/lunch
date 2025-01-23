@@ -11,7 +11,7 @@ from pony.orm import *
 PORT = config('PORT', default=8080, cast=int)
 RELOAD = config('RELOAD', default=True, cast=bool)
 
-css = Path("static/styles.css").read_text()
+# css = Path("static/styles.css").read_text()
 # javascript = Path("static/script.js").read_text()
 
 hdrs = (
@@ -26,6 +26,8 @@ app, rt = fast_app(
     hdrs=hdrs,
     pico=True,
 )
+
+setup_toasts(app, duration=2)
 
 db = Database()
 
@@ -185,12 +187,11 @@ def index():
 
 
 @rt('/roll')
-def roll(option: str):
+def roll(option: str, session):
     restaurant = rng_restaurant(option)
+    message = f"Today's {option} lunch is at: {restaurant}" if restaurant else "No restaurants found for that option!"
+    add_toast(session, message, "success" if restaurant else "error")
     return Div(
-        P(f"Today's {option} lunch is at: {restaurant}", cls="text-xl")
-        if restaurant
-        else P("No restaurants found for that option!", cls="text-red-500"),
         Div(hx_swap_oob="true", id="form-area"),
     )
 
@@ -213,19 +214,25 @@ def list():
 
 
 @rt('/add')
-def add(name: str, option: str):
+def add(name: str, option: str, session):
     result = add_restaurant(name, option)
+    if result is False:
+        add_toast(session, f"{name} already exists!", "error")
+    else:
+        add_toast(session, f"Added {name}!", "success")
     return Div(
-        P(f"{name} already exists!", cls="text-red-500") if result is False else P(f"Added {name}!", cls="text-green-500"),
         Div(hx_swap_oob="true", id="form-area"),
     )
 
 
 @rt('/delete')
-def post(name: str):
+def post(name: str, session):
     result = delete_restaurant(name)
+    if result is None:
+        add_toast(session, "Restaurant not found!", "error")
+    else:
+        add_toast(session, f"{name} deleted!", "success")
     return Div(
-        P("Restaurant not found!", cls="text-red-500") if result is None else P(f"{name} deleted!", cls="text-green-500"),
         Div(hx_swap_oob="true", id="form-area"),
     )
 
