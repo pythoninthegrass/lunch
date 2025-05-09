@@ -1,0 +1,107 @@
+# Python Lunch App LLM Prompt Best Practices
+
+## Project Overview
+This project is a Python-based lunch selection application using Flet UI framework. It allows users to randomly select restaurants for lunch, add new restaurants, delete restaurants, and view all restaurants.
+
+## Framework Knowledge
+
+### Flet (https://flet.dev)
+The primary UI framework used in this project. When prompting LLMs about Flet, remember:
+- Flet uses Flutter for rendering UI elements but is controlled through Python
+- Do not use any javascript or its frameworks (e.g. React, Vue, etc.) in your prompts
+- All UI elements are called "controls" in Flet
+- Controls are organized in a hierarchy with parent and child relationships
+- Key imports: `import flet as ft` and UI controls from `flet import Column, Container, etc.`
+- State changes require UI updates through `.update()` method calls
+- Page structure follows `Page -> Controls -> Child Controls` pattern
+
+Example prompt for Flet:
+```
+Show me how to create a Flet app that loads data from SQLModel and displays it in a ListView with a radio button filter.
+```
+
+### uv (Python Package Management)
+The project uses uv for dependency management. Key points for LLM prompts:
+- uv is a high-performance Python package installer and resolver
+- Used instead of pip for faster dependency management
+- Commands follow `uv <command>` syntax rather than pip
+- Create a virtual environment with `uv venv` and activate with `source .venv/bin/activate`
+- Run `uv pip install -r pyproject.toml --all-extras` to install dependencies
+- Run `uv run main.py` to start the app
+
+Example prompt for uv:
+```
+How do I add a new dependency to my project using uv and update the requirements in pyproject.toml?
+```
+
+### SQLModel/SQLAlchemy
+The project uses SQLModel (built on SQLAlchemy) for database operations:
+- Combines SQLAlchemy Core and Pydantic for type safety
+- Uses SQLModel for table definitions and queries
+- Important to understand session management and query execution
+
+Example prompt:
+```
+Show me how to create a function that queries the lunch_list table with SQLModel, filters by option, and returns the results.
+```
+
+## Testing with pytest
+
+When working with pytest in this project:
+- Tests should focus on database operations, UI rendering, and business logic
+- Mock database connections for unit tests
+- Test Flet UI components as isolated units
+- Use fixtures for common test setup
+
+Example prompt:
+```
+Create pytest tests for the rng_restaurant function in util.py, including mocks for the database session.
+```
+
+## Common Tasks and Prompt Templates
+
+### Implementing UI Features
+```
+Implement a Flet UI component that shows a list of restaurants from the lunch_list table with their options (cheap/normal) and allows filtering by clicking on option buttons.
+```
+
+### Database Operations
+```
+Create a function using SQLModel that updates a restaurant's option in the lunch_list table, with proper error handling and session management.
+```
+
+### Docker and Deployment
+```
+Modify the Dockerfile to properly install Flet dependencies and ensure the app runs correctly in a container environment.
+```
+
+### Adding Tests
+```
+Write pytest tests for the calculate_lunch function that verify it doesn't return restaurants that were recently selected.
+```
+
+## Anti-patterns to Avoid
+
+- Don't mix Flet and Tkinter UI code - the project is moving to Flet
+- Avoid direct SQL queries - use SQLModel patterns instead
+- Don't use print statements for debugging - implement proper logging
+- Avoid hardcoding paths - use Path from pathlib
+- Don't create new database connections for each operation
+
+## Effective Debugging Prompts
+
+```
+The Flet UI button click isn't triggering my function. Here's my button_clicked method and the button definition. What could be wrong with the event connection?
+```
+
+```
+When I call rng_restaurant('cheap'), I get the following error: [paste error]. Here's my current implementation of the function and database structure.
+```
+
+## Style and Convention Guidelines
+
+- Follow PEP 8 for code style
+- Use Python type hints throughout the codebase
+- Organize Flet controls with a clear hierarchy
+- Use dataclasses or SQLModel models for data structures
+- Keep business logic separate from UI code
