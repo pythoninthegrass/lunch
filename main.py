@@ -1,287 +1,233 @@
 #!/usr/bin/env python
 
-import random
-from datetime import datetime
-from decouple import config
-from fasthtml.common import *
-from pathlib import Path
-from pony.orm import *
+import flet as ft
+from util import *
 
 
-PORT = config('PORT', default=8080, cast=int)
-RELOAD = config('RELOAD', default=True, cast=bool)
+def main(page: ft.Page):
+    page.title = "Lunch"
+    page.window_width = 650
+    page.window_height = 400
+    page.vertical_alignment = "center"
+    page.horizontal_alignment = "center"
+    page.padding = 10
+    page.background_color = ft.Colors.WHITE
 
-# css = Path("static/styles.css").read_text()
-# javascript = Path("static/script.js").read_text()
-
-hdrs = (
-    Link(rel="stylesheet", href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"),
-    HighlightJS(langs=['python', 'javascript', 'html', 'css']),
-    # Script(javascript),
-    # Style(css),
-)
-
-app, rt = fast_app(
-    static_path='static',
-    hdrs=hdrs,
-    pico=True,
-)
-
-setup_toasts(app, duration=2)
-
-db = Database()
-
-
-class LunchList(db.Entity):
-    id = PrimaryKey(int, auto=True)
-    restaurant = Required(str, unique=True)
-    option = Required(str)
-
-
-class RecentLunch(db.Entity):
-    id = PrimaryKey(int, auto=True)
-    restaurant = Required(str)
-    date = Required(datetime, default=datetime.now)
-
-
-db_fn = Path(__file__).parent / "lunch.db"
-lunch_list_fn = Path(__file__).parent / "lunch_list.csv"
-recent_lunch_fn = Path(__file__).parent / "recent_lunch.csv"
-
-db.bind(provider='sqlite', filename=str(db_fn), create_db=True)
-db.generate_mapping(create_tables=True)
-
-
-@db_session
-def create_db_and_tables():
-    """Create database and tables if they don't exist."""
-    if not db_fn.exists():
-        with open(lunch_list_fn, "r") as f:
-            for line in f:
-                if line.startswith("restaurant"):
-                    continue
-                restaurant, option = line.strip().split(",")
-                LunchList(restaurant=restaurant, option=option)
-
-        with open(recent_lunch_fn, "r") as f:
-            for line in f:
-                if line.startswith("restaurant"):
-                    continue
-                restaurant, date = line.strip().split(",")
-                date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S.%f")
-                RecentLunch(restaurant=restaurant, date=date)
-
-
-@db_session
-def get_all_restaurants():
-    """Return list of all restaurants."""
-    return select(r.restaurant for r in LunchList)[:]
-
-
-@db_session
-def get_restaurants(option):
-    """Return list of restaurants based on cost."""
-    return select(r.restaurant for r in LunchList if r.option.lower() == option.lower())[:]
-
-
-@db_session
-def rng_restaurant(option):
-    """Return random restaurant based on cost."""
-    restaurants = get_restaurants(option)
-    if not restaurants:
-        return None
-
-    if option.lower() != 'cheap' and len(restaurants) >= 15:
-        # Get recent restaurants
-        recent = select(r.restaurant for r in RecentLunch).order_by(desc(RecentLunch.date))[:14]
-        recent = set(recent)
-
-        # Filter out recent ones
-        available = [r for r in restaurants if r not in recent]
-        if not available:
-            available = restaurants
-
-        choice = random.choice(available)
-
-        # Add to recent and cleanup old entries
-        RecentLunch(restaurant=choice)
-
-        # Keep only latest 14 entries
-        old_entries = select(r for r in RecentLunch).order_by(desc(RecentLunch.date))[14:]
-        for entry in old_entries:
-            entry.delete()
-
-        return choice
-
-    return random.choice(restaurants)
-
-
-@db_session
-def add_restaurant(name, option):
-    """Add restaurant to database."""
-    if LunchList.exists(lambda r: r.restaurant.lower() == name.lower()):
-        return False
-
-    LunchList(restaurant=name, option=option)
-    return True
-
-
-@db_session
-def delete_restaurant(name):
-    """Delete restaurant from database."""
-    restaurant = LunchList.get(lambda r: r.restaurant.lower() == name.lower())
-    if not restaurant:
-        return None
-
-    restaurant.delete()
-    return True
-
-
-@rt('/')
-def index():
-    return Titled(
-        "Lunch",
-        Container(
-            H2("Click below to find out what's for Lunch", style="text-align: center; margin-bottom: 2rem;"),
-            Div(
-                Div(
-                    Input(type="radio", name="option", value="cheap", id="cheap", checked=True),
-                    Label("Cheap", for_="cheap", style="margin-right: 1rem;"),
-                    Input(type="radio", name="option", value="normal", id="normal"),
-                    Label("Normal", for_="normal"),
-                    style="margin-bottom: 2rem;",
-                ),
-                style="text-align: center;",
-            ),
-            Div(
-                Button(
-                    "Roll Lunch",
-                    hx_post="/roll",
-                    hx_include="[name='option']",
-                    hx_target="#result",
-                    hx_swap_oob="true",
-                    style="margin: 0 0.5rem 1rem;",
-                ),
-                Button(
-                    "Add Restaurant",
-                    hx_get="/add-form",
-                    hx_target="#form-area",
-                    hx_swap_oob="true",
-                    style="margin: 0 0.5rem 1rem;",
-                ),
-                Button(
-                    "Delete Restaurant",
-                    hx_get="/delete-form",
-                    hx_target="#form-area",
-                    hx_swap_oob="true",
-                    style="margin: 0 0.5rem 1rem;",
-                ),
-                Button("List All", hx_get="/list", hx_target="#result", hx_swap_oob="true", style="margin-bottom: 1rem;"),
-                style="text-align: center;",
-            ),
-            Div(id="result", style="margin-top: 1rem; text-align: center;"),
-            Div(id="form-area", style="margin-top: 1rem; text-align: center;"),
-            style="max-width: 800px; margin: 0 auto; padding: 2rem;",
-        ),
-    )
-
-
-@rt('/roll')
-def roll(option: str, session):
-    restaurant = rng_restaurant(option)
-    message = f"Today's {option} lunch is at: {restaurant}" if restaurant else "No restaurants found for that option!"
-    add_toast(session, message, "success" if restaurant else "error")
-    return Div(
-        Div(hx_swap_oob="true", id="form-area"),
-    )
-
-
-@rt('/list')
-@db_session
-def list():
-    restaurants = select((r.restaurant, r.option) for r in LunchList).order_by(lambda r1, r2: r1[0] > r2[0])[:]
-    return Div(
-        Div(
-            H2("All Restaurants"),
-            Table(
-                Tr(Th("Restaurant"), Th("Type")), *[Tr(Td(name), Td(option.title())) for name, option in restaurants], cls="table"
-            )
-            if restaurants
-            else P("No restaurants found!", cls="text-red-500"),
-        ),
-        Div(hx_swap_oob="true", id="form-area"),
-    )
-
-
-@rt('/add')
-def add(name: str, option: str, session):
-    result = add_restaurant(name, option)
-    if result is False:
-        add_toast(session, f"{name} already exists!", "error")
-    else:
-        add_toast(session, f"Added {name}!", "success")
-    return Div(
-        Div(hx_swap_oob="true", id="form-area"),
-    )
-
-
-@rt('/delete')
-def post(name: str, session):
-    result = delete_restaurant(name)
-    if result is None:
-        add_toast(session, "Restaurant not found!", "error")
-    else:
-        add_toast(session, f"{name} deleted!", "success")
-    return Div(
-        Div(hx_swap_oob="true", id="form-area"),
-    )
-
-
-@rt('/add-form')
-def add_form():
-    return Form(
-        H3("Add Restaurant", style="margin-bottom: 1rem;"),
-        Div(
-            Input(name="name", placeholder="Restaurant name", required=True, style="margin-bottom: 1rem; width: 100%;"),
-            Div(
-                Input(type="radio", name="option", value="cheap", id="add-cheap", checked=True),
-                Label("Cheap", for_="add-cheap", style="margin-right: 1rem;"),
-                Input(type="radio", name="option", value="normal", id="add-normal"),
-                Label("Normal", for_="add-normal"),
-                style="text-align: center; margin-bottom: 1rem;",
-            ),
-            Button("Add", type="submit", style="width: 100%;"),
-            style="display: flex; flex-direction: column; align-items: center;",
-        ),
-        hx_post="/add",
-        hx_target="#result",
-    )
-
-
-@rt('/delete-form')
-def delete_form():
-    restaurants = get_all_restaurants()
-    if not restaurants:
-        return P("No restaurants to delete!", cls="text-red-500")
-
-    return Form(
-        H3("Delete Restaurant"),
-        Select(name="name", required=True)(*[Option(r, value=r) for r in restaurants]),
-        Button("Delete", type="submit"),
-        hx_post="/delete",
-        hx_target="#result",
-    )
-
-
-if __name__ == '__main__':
+    # Create database and tables if they don't exist
     create_db_and_tables()
-    serve(
-        host='0.0.0.0',
-        port=PORT,
-        reload=RELOAD,
-        reload_includes=[
-            'static/*.css',
-            'static/*.js',
+
+    # Create text controls
+    title_text = ft.Text("Click below to find out what's for Lunch:")
+    result_text = ft.Text()
+
+    # Create radio button group for options
+    option = "Normal"  # Default option
+
+    def option_changed(e):
+        nonlocal option
+        option = e.control.value
+        page.update()
+
+    radio_group = ft.RadioGroup(
+        content=ft.Row([
+            ft.Container(ft.Radio(value="cheap", label="Cheap"), alignment=ft.Alignment(0.0, 0.0)),
+            ft.Container(ft.Radio(value="Normal", label="Normal"), alignment=ft.Alignment(0.0, 0.0)),
         ],
-        reload_excludes=['scratch.py'],
+        alignment=ft.MainAxisAlignment.CENTER),
+        value="Normal",
+        on_change=option_changed
     )
+
+    # Bottom sheet for adding/deleting restaurants
+    bottom_sheet = ft.BottomSheet(
+        ft.Container(
+            ft.Column(
+                [
+                    ft.Text("", size=16),
+                    ft.ElevatedButton("Close", on_click=lambda e: close_bs())
+                ],
+                tight=True
+            ),
+            padding=10
+        ),
+        open=False
+    )
+    page.overlay.append(bottom_sheet)
+
+    # Methods for bottom sheet operations
+    def close_bs():
+        bottom_sheet.open = False
+        page.update()
+
+    def show_add_restaurant_sheet():
+        entry_field = ft.TextField(label="Restaurant Name")
+
+        def add_restaurant_confirm(e, opt):
+            try:
+                restaurant_name = entry_field.value
+                if not restaurant_name:
+                    return
+
+                # Add restaurant to database
+                add_restaurant_to_db(restaurant_name, opt or option)
+
+                # Show a confirmation
+                result_text.value = f"Added restaurant: {restaurant_name} ({opt or option})"
+
+                # Close the bottom sheet
+                close_bs()
+                page.update()
+            except Exception as e:
+                result_text.value = f"Error adding restaurant: {str(e)}"
+                page.update()
+
+        option_radio = ft.RadioGroup(
+            content=ft.Row([
+                ft.Radio(value="cheap", label="Cheap"),
+                ft.Radio(value="Normal", label="Normal"),
+            ]),
+            value="Normal"
+        )
+
+        # Update bottom sheet content
+        bottom_sheet.content.content.controls = [
+            ft.Column(
+                [
+                    ft.Text("Add New Restaurant", size=16, weight="bold"),
+                    entry_field,
+                    ft.Text("Price Range:"),
+                    option_radio,
+                    ft.Row(
+                        [
+                            ft.ElevatedButton("Add", on_click=lambda e: add_restaurant_confirm(e, option_radio.value)),
+                            ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
+                        ],
+                        alignment=ft.MainAxisAlignment.END,
+                    ),
+                ],
+                tight=True,
+            )
+        ]
+
+        bottom_sheet.open = True
+        page.update()
+
+    def show_delete_restaurant_sheet():
+        # Get all restaurants from the database
+        restaurants = get_all_restaurants()
+
+        def delete_restaurant_confirm(e, restaurant):
+            try:
+                # Delete restaurant from database
+                delete_restaurant_from_db(restaurant[0])
+
+                # Show a confirmation
+                result_text.value = f"Deleted restaurant: {restaurant[0]}"
+
+                # Close the bottom sheet
+                close_bs()
+                page.update()
+            except Exception as e:
+                result_text.value = f"Error deleting restaurant: {str(e)}"
+                page.update()
+
+        # Create a column with all restaurants as buttons
+        restaurant_buttons = []
+        for restaurant in restaurants:
+            restaurant_buttons.append(
+                ft.ElevatedButton(
+                    text=f"{restaurant[0]} ({restaurant[1]})",
+                    on_click=lambda e, r=restaurant: delete_restaurant_confirm(e, r),
+                    data=restaurant,
+                )
+            )
+
+        # Update bottom sheet content
+        bottom_sheet.content.content.controls = [
+            ft.Column(
+                [
+                    ft.Text("Select Restaurant to Delete", size=16, weight="bold"),
+                    ft.Column(restaurant_buttons, scroll=True, height=300),
+                    ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
+                ],
+                tight=True,
+            )
+        ]
+
+        bottom_sheet.open = True
+        page.update()
+
+    def show_list_all_sheet():
+        # Get all restaurants from the database
+        restaurants = get_all_restaurants()
+
+        # Create a column with all restaurants
+        restaurant_items = []
+        for restaurant in restaurants:
+            restaurant_items.append(
+                ft.Text(f"{restaurant[0]} ({restaurant[1]})")
+            )
+
+        # Update bottom sheet content
+        bottom_sheet.content.content.controls = [
+            ft.Column(
+                [
+                    ft.Text("All Restaurants", size=16, weight="bold"),
+                    ft.Column(restaurant_items, scroll=True, height=300),
+                    ft.ElevatedButton("Close", on_click=lambda e: close_bs()),
+                ],
+                tight=True,
+            )
+        ]
+
+        bottom_sheet.open = True
+        page.update()
+
+    def roll_lunch(e):
+        """Select a random restaurant based on the selected option"""
+        try:
+            # Get random restaurant from database
+            restaurant = rng_restaurant(option)
+
+            # Update the result text
+            result_text.value = f"Today's lunch: {restaurant[0]}"
+            page.update()
+        except Exception as e:
+            # Handle error (e.g., no restaurants found)
+            result_text.value = f"Error selecting restaurant: {str(e)}"
+            page.update()
+
+    # Create action buttons
+    button_row = ft.Row(
+        controls=[
+            ft.Container(
+                ft.ElevatedButton(text="Roll Lunch", on_click=roll_lunch),
+                alignment=ft.Alignment(0.0, 0.0)
+            ),
+            ft.Container(
+                ft.ElevatedButton(text="Delete Restaurant", on_click=lambda e: show_delete_restaurant_sheet()),
+                alignment=ft.Alignment(0.0, 0.0)
+            ),
+            ft.Container(
+                ft.ElevatedButton(text="Add Restaurant", on_click=lambda e: show_add_restaurant_sheet()),
+                alignment=ft.Alignment(0.0, 0.0)
+            ),
+            ft.Container(
+                ft.ElevatedButton(text="List All", on_click=lambda e: show_list_all_sheet()),
+                alignment=ft.Alignment(0.0, 0.0)
+            ),
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    # Add all controls to the page
+    page.add(
+        title_text,
+        radio_group,
+        button_row,
+        result_text
+    )
+
+
+if __name__ == "__main__":
+    ft.app(target=main)

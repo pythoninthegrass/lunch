@@ -5,9 +5,10 @@
 — [@pythoninthegrass](https://github.com/pythoninthegrass)
 
 ## Setup
+
 * Install 
   * [asdf](https://asdf-vm.com/guide/getting-started.html)
-  * [poetry](https://python-poetry.org/docs/)
+  * [uv](https://docs.astral.sh/uv/getting-started/installation/)
   * [docker-compose](https://docs.docker.com/compose/install/)
   * [editorconfig](https://editorconfig.org/)
   * [playwright](https://playwright.dev/python/docs/intro#installation)
@@ -54,62 +55,70 @@ Additional tooling includes but is not limited to:
 
 * Install [asdf](https://asdf-vm.com/guide/getting-started.html#_2-download-asdf)
 * Usage
+
     ```bash
     # add python plugin
-    asdf plugin-add python
+    asdf plugin add python
 
     # install stable python
-    asdf install python <latest|3.11.11>
+    asdf install python <latest|3.12.10>
 
     # set stable to system python
-    asdf global python latest
+    asdf set -u python 3.12.10
 
-    # add poetry asdf plugin
-    asdf plugin-add poetry https://github.com/asdf-community/asdf-poetry.git
+    # add uv asdf plugin
+    asdf plugin add uv https://github.com/asdf-community/asdf-uv.git
 
     # install latest version via asdf
-    asdf install poetry <latest|2.0.1>
+    asdf install uv <latest|0.7.4>
 
     # set latest version as default
-    asdf global poetry latest
+    asdf set -u uv latest
     ```
 
-#### poetry
+#### uv
 
-* Install [poetry](https://python-poetry.org/docs/#installation) if not using `asdf`
+* Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not using `asdf`
 * Usage
+   
     ```bash
-    # use venv in repo
-    poetry config virtualenvs.in-project true
+    # create a venv w/system python (./.venv)
+    uv venv
+
+    # activate venv
+    source .venv/bin/activate
 
     # install dependencies
-    poetry install
+    uv pip install -r pyproject.toml
+
+    # install with extras (for development)
+    uv pip install -r pyproject.toml --all-extras
 
     # add new dependency
-    poetry add <package>
+    uv add <package>
 
-    # remove dependency
-    poetry remove <package>
+    # add optional dependency to dev group
+    uv add --optional dev <package>
 
-    # activate virtual environment
-    poetry shell
+    # export requirements.txt from pyproject.toml
+    uv pip compile pyproject.toml -o requirements.txt
 
     # run program
     python main.py
 
     # exit virtual environment
-    exit
+    deactivate
     ```
 
-#### vscode
+#### VSCode
 
-* Install [vscode](https://code.visualstudio.com/download)
-* Setup [vscode settings](.vscode/launch.json)
+* Install [VSCode](https://code.visualstudio.com/download)
+* Setup [VSCode settings](.vscode/launch.json)
   * Handles debug settings for generic python programs as well as others (e.g., django, flask, etc.)
 * Dev Containers
   * [Command palette](https://code.visualstudio.com/docs/getstarted/userinterface#_command-palette) (⇧⌘P) > Dev Containers: Reopen in Container
   * F5 for debug
-      * May need to select interpreter (e.g., `/opt/venv/bin/python`) first
+    * May need to select interpreter (e.g., `/opt/venv/bin/python`) first
 
 #### ruff
 
@@ -143,7 +152,7 @@ Additional tooling includes but is not limited to:
 
 ```bash
 # install pre-commit dev dependency
-poetry install
+uv pip install -r pyproject.toml --all-extras
 
 # install pre-commit hooks
 pre-commit install
@@ -160,49 +169,27 @@ Handles formatting of files. [Install the editorconfig plugin](https://editorcon
 
 * [Dependabot](https://dependabot.com/) is a GitHub tool that automatically creates pull requests to keep dependencies up to date.
 
+#### repomix
+
+* Capture upstream source code context for LLMs via [repomix](https://repomix.com/guide/)
+
+    ```bash
+    # install repomix
+    brew install repomix
+
+    # generate summary
+    repomix --remote https://github.com/flet-dev/flet \
+            --output docs/flet_summary.md \
+            --style markdown \
+            --compress \
+            --remove-comments \
+            --remove-empty-lines
+    ```
+
 ## TODO
 
-* Build
-  * justfile -> taskfile
-* UI/UX
-  * Fix padding between buttons
-  * Move "logo" to top left of container
-* Package
-  * Web
-    * Fly.io
-    * Self-host
-  * Desktop [Tauri](https://v1.tauri.app/) 
-    * macOS
-    * Linux
-    * Windows
-  * Mobile (TBD)
-    * iOS
-    * Android
-* Test
-  * Unit tests
-  * Integration tests
-  * E2E tests
-* CI/CD
-  * Docker
-  * GitHub Actions
-    * semver
-      * [release-please](https://github.com/marketplace/actions/release-please-action)
-    * Lint
-    * Format
-    * Run tests
-    * Build
-  * ArgoCD / Flux
-* Extend
-  * sqlite -> ~~postgres~~ [Litestream](https://litestream.io/) / [Turso](https://turso.tech/)
-  * Fancy category
-  * Images
-  * Menus
-  * API calls to Yelp, Google, etc.
-  * Tinder swipe right/left mechanic hehehe
-* Document
+See [TODO.md](TODO.md).
 
 ## Further Reading
 
-* [FastHTML](https://fastht.ml/)
-* [Python Poetry, finally easy build and deploy packages | by Jose Alberto Torres Agüera | Lambda Automotive | Medium](https://medium.com/lambda-automotive/python-poetry-finally-easy-build-and-deploy-packages-e1e84c23401f)  
-* [Python 101: Developing Package with Poetry | by Julio Anthony Leonard | Bootcampers | Medium](https://medium.com/bootcampers/python-101-developing-package-with-poetry-449c57690350)
+* ^^
