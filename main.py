@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import flet as ft                   # noqa: I001
+import flet as ft  # noqa: I001
 from core.app import create_app
 
 

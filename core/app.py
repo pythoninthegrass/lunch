@@ -34,13 +34,21 @@ def create_app(page: ft.Page):
         page.update()
 
     radio_group = ft.RadioGroup(
-        content=ft.Row([
-            ft.Container(ft.Radio(value="cheap", label="Cheap"), alignment=ft.Alignment(0.0, 0.0)),
-            ft.Container(ft.Radio(value="Normal", label="Normal"), alignment=ft.Alignment(0.0, 0.0)),
-        ],
-        alignment=ft.MainAxisAlignment.CENTER),
+        content=ft.Row(
+            [
+                ft.Container(
+                    ft.Radio(value="cheap", label="Cheap"),
+                    alignment=ft.Alignment(0.0, 0.0),
+                ),
+                ft.Container(
+                    ft.Radio(value="Normal", label="Normal"),
+                    alignment=ft.Alignment(0.0, 0.0),
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
         value="Normal",
-        on_change=option_changed
+        on_change=option_changed,
     )
 
     # Bottom sheet for adding/deleting restaurants
@@ -49,13 +57,13 @@ def create_app(page: ft.Page):
             ft.Column(
                 [
                     ft.Text("", size=16),
-                    ft.ElevatedButton("Close", on_click=lambda e: close_bs())
+                    ft.ElevatedButton("Close", on_click=lambda e: close_bs()),
                 ],
-                tight=True
+                tight=True,
             ),
-            padding=10
+            padding=10,
         ),
-        open=False
+        open=False,
     )
     page.overlay.append(bottom_sheet)
 
@@ -77,7 +85,9 @@ def create_app(page: ft.Page):
                 add_restaurant_to_db(restaurant_name, opt or option)
 
                 # Show a confirmation
-                result_text.value = f"Added restaurant: {restaurant_name} ({opt or option})"
+                result_text.value = (
+                    f"Added restaurant: {restaurant_name} ({opt or option})"
+                )
 
                 # Close the bottom sheet
                 close_bs()
@@ -87,11 +97,13 @@ def create_app(page: ft.Page):
                 page.update()
 
         option_radio = ft.RadioGroup(
-            content=ft.Row([
-                ft.Radio(value="cheap", label="Cheap"),
-                ft.Radio(value="Normal", label="Normal"),
-            ]),
-            value="Normal"
+            content=ft.Row(
+                [
+                    ft.Radio(value="cheap", label="Cheap"),
+                    ft.Radio(value="Normal", label="Normal"),
+                ]
+            ),
+            value="Normal",
         )
 
         # Update bottom sheet content
@@ -104,7 +116,12 @@ def create_app(page: ft.Page):
                     option_radio,
                     ft.Row(
                         [
-                            ft.ElevatedButton("Add", on_click=lambda e: add_restaurant_confirm(e, option_radio.value)),
+                            ft.ElevatedButton(
+                                "Add",
+                                on_click=lambda e: add_restaurant_confirm(
+                                    e, option_radio.value
+                                ),
+                            ),
                             ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
                         ],
                         alignment=ft.MainAxisAlignment.END,
@@ -169,9 +186,7 @@ def create_app(page: ft.Page):
         # Create a column with all restaurants
         restaurant_items = []
         for restaurant in restaurants:
-            restaurant_items.append(
-                ft.Text(f"{restaurant[0]} ({restaurant[1]})")
-            )
+            restaurant_items.append(ft.Text(f"{restaurant[0]} ({restaurant[1]})"))
 
         # Update bottom sheet content
         bottom_sheet.content.content.controls = [
@@ -207,28 +222,31 @@ def create_app(page: ft.Page):
         controls=[
             ft.Container(
                 ft.ElevatedButton(text="Roll Lunch", on_click=roll_lunch),
-                alignment=ft.Alignment(0.0, 0.0)
+                alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
-                ft.ElevatedButton(text="Delete Restaurant", on_click=lambda e: show_delete_restaurant_sheet()),
-                alignment=ft.Alignment(0.0, 0.0)
+                ft.ElevatedButton(
+                    text="Delete Restaurant",
+                    on_click=lambda e: show_delete_restaurant_sheet(),
+                ),
+                alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
-                ft.ElevatedButton(text="Add Restaurant", on_click=lambda e: show_add_restaurant_sheet()),
-                alignment=ft.Alignment(0.0, 0.0)
+                ft.ElevatedButton(
+                    text="Add Restaurant",
+                    on_click=lambda e: show_add_restaurant_sheet(),
+                ),
+                alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
-                ft.ElevatedButton(text="List All", on_click=lambda e: show_list_all_sheet()),
-                alignment=ft.Alignment(0.0, 0.0)
+                ft.ElevatedButton(
+                    text="List All", on_click=lambda e: show_list_all_sheet()
+                ),
+                alignment=ft.Alignment(0.0, 0.0),
             ),
         ],
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
     # Add all controls to the page
-    page.add(
-        title_text,
-        radio_group,
-        button_row,
-        result_text
-    )
+    page.add(title_text, radio_group, button_row, result_text)
