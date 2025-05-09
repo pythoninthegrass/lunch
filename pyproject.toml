@@ -9,15 +9,16 @@ authors = [
 requires-python = "~=3.12"
 readme = "README.md"
 dependencies = [
-    "flet",
+    "flet[all]",
     "sqlmodel>=0.0.8",
 ]
 
-[dependency-groups]
+[project.optional-dependencies]
 dev = [
-    "icecream>=2.1.1,<3",
+    "icecream",
     "passlib",
-    "PySimpleGUI>=4.56.0,<5",
+    "pre-commit>=4.2.0",
+    "PySimpleGUI",
     "sqlacodegen",
     "tk>=0.1.0,<0.2",
 ]
