@@ -15,24 +15,15 @@
 
 ## Quickstart
 
+### Clone repo
+
 ```bash
 # clone repo
 git clone https://github.com/pythoninthegrass/lunch.git
 
 # change directory
 cd lunch/
-
-# install dependencies
-python -m pip install -r requirements.txt
-
-# run program
-python main.py
-
-# quit program
-ctrl + c
 ```
-
-## Development
 
 ### Python virtual environment
 
@@ -42,10 +33,33 @@ python -m venv .venv
 
 # activate virtual environment
 source .venv/bin/activate
-
-# install dependencies
-python -m pip install -r requirements.txt 
 ```
+
+### Install dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### Run program
+
+```bash
+python main.py
+```
+
+### Quit program
+
+```bash
+ctrl + c
+```
+
+### Deactivate virtual environment
+
+```bash
+deactivate
+```
+
+## Development
 
 ### Additional tooling
 
@@ -165,9 +179,9 @@ pre-commit autoupdate
 
 Handles formatting of files. [Install the editorconfig plugin](https://editorconfig.org/#download) for your editor of choice.
 
-#### dependabot
+#### Renovate
 
-* [Dependabot](https://dependabot.com/) is a GitHub tool that automatically creates pull requests to keep dependencies up to date.
+* [Renovate](https://docs.renovatebot.com/) is a GitHub tool that automatically creates pull requests to keep dependencies up to date.
 
 #### repomix
 
