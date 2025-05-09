@@ -169,6 +169,23 @@ Handles formatting of files. [Install the editorconfig plugin](https://editorcon
 
 * [Dependabot](https://dependabot.com/) is a GitHub tool that automatically creates pull requests to keep dependencies up to date.
 
+#### repomix
+
+* Capture upstream source code context for LLMs via [repomix](https://repomix.com/guide/)
+
+    ```bash
+    # install repomix
+    brew install repomix
+
+    # generate summary
+    repomix --remote https://github.com/flet-dev/flet \
+            --output docs/flet_summary.md \
+            --style markdown \
+            --compress \
+            --remove-comments \
+            --remove-empty-lines
+    ```
+
 ## TODO
 
 See [TODO.md](TODO.md).
