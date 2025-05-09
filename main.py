@@ -9,9 +9,6 @@ from flet import (
     Page,
     Row,
     Text,
-    UserControl,
-    border_radius,
-    colors,
 )
 import random
 # import sqlite3
@@ -27,7 +24,7 @@ from typing import Optional, Dict, List, Tuple
 class CustomButton():
     text: str
     style: Tuple = field(default_factory=lambda: ft.ButtonStyle(shape={
-        ft.MaterialState.DEFAULT: RoundedRectangleBorder(radius=2),
+        ft.ControlState.DEFAULT: RoundedRectangleBorder(radius=2),
     }))
     on_click: Optional[ft.ElevatedButton().on_click] = None
 
@@ -39,38 +36,43 @@ class CustomButton():
             )
 
 
-class Lunch(UserControl):
+class Lunch(ft.Column):
     def __init__(self, page: Page):
         super().__init__()
         self.page = page
-        self._build()
+        self.result = ft.Text("")
+        self.expand = True
 
+    def did_mount(self):
+        self.build()
 
-    def _build(self):
-        page = self.page
-        page.title = "Lunch"
-        page.background_color = colors.WHITE
-        page.padding = 10
+    def build(self):
+        self.page.title = "Lunch"
+        self.page.background_color = ft.Colors.WHITE
+        self.page.padding = 10
 
         choice = ft.RadioGroup(
             content=ft.Row([
-                ft.Container(ft.Radio(value="cheap", label="Cheap"), alignment=ft.alignment.center),
-                ft.Container(ft.Radio(value="normal", label="Normal"), alignment=ft.alignment.center),
+                ft.Container(ft.Radio(value="cheap", label="Cheap"), alignment=ft.Alignment(0.0, 0.0)),
+                ft.Container(ft.Radio(value="normal", label="Normal"), alignment=ft.Alignment(0.0, 0.0)),
             ],
             alignment=ft.MainAxisAlignment.CENTER,)
         )
-        page.add(ft.Text("Click below to find out what's for Lunch:"), choice)
 
         row = Row(
             controls=[
-                Container(CustomButton(text="Roll Lunch")(page), alignment=ft.alignment.center, on_click=self.button_clicked, data="roll"),
-                Container(CustomButton(text="Delete Restaurant")(page), alignment=ft.alignment.center, on_click=self.button_clicked, data="delete"),
-                Container(CustomButton(text="Add Restaurant")(page), alignment=ft.alignment.center, on_click=self.button_clicked, data="add"),
-                Container(CustomButton(text="List All")(page), alignment=ft.alignment.center, on_click=self.button_clicked, data="list"),
+                Container(CustomButton(text="Roll Lunch")(self.page), alignment=ft.Alignment(0.0, 0.0), on_click=self.button_clicked, data="roll"),
+                Container(CustomButton(text="Delete Restaurant")(self.page), alignment=ft.Alignment(0.0, 0.0), on_click=self.button_clicked, data="delete"),
+                Container(CustomButton(text="Add Restaurant")(self.page), alignment=ft.Alignment(0.0, 0.0), on_click=self.button_clicked, data="add"),
+                Container(CustomButton(text="List All")(self.page), alignment=ft.Alignment(0.0, 0.0), on_click=self.button_clicked, data="list"),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         )
-        page.add(row)
+
+        self.controls.append(ft.Text("Click below to find out what's for Lunch:"))
+        self.controls.append(choice)
+        self.controls.append(row)
+        self.controls.append(self.result)
 
     # TODO: connect to db; bind to buttons; create views based on button clicks
     def roll_lunch(self, option):
