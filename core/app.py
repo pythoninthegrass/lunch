@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import flet as ft
 from utils.db import (
     add_restaurant_to_db,
