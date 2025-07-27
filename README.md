@@ -7,9 +7,8 @@
 ## Setup
 
 * Install 
-  * [asdf](https://asdf-vm.com/guide/getting-started.html)
   * [uv](https://docs.astral.sh/uv/getting-started/installation/)
-  * [docker-compose](https://docs.docker.com/compose/install/)
+  * [docker compose](https://docs.docker.com/compose/install/)
   * [editorconfig](https://editorconfig.org/)
   * [playwright](https://playwright.dev/python/docs/intro#installation)
 
@@ -65,34 +64,22 @@ deactivate
 
 Additional tooling includes but is not limited to:
 
-#### asdf
+#### mise
 
-* Install [asdf](https://asdf-vm.com/guide/getting-started.html#_2-download-asdf)
+* Install [mise](https://mise.jdx.dev/installing-mise.html)
 * Usage
 
     ```bash
-    # add python plugin
-    asdf plugin add python
+    # install all dependencies in .tool-versions
+    mise install
 
-    # install stable python
-    asdf install python <latest|3.12.10>
-
-    # set stable to system python
-    asdf set -u python 3.12.10
-
-    # add uv asdf plugin
-    asdf plugin add uv https://github.com/asdf-community/asdf-uv.git
-
-    # install latest version via asdf
-    asdf install uv <latest|0.7.4>
-
-    # set latest version as default
-    asdf set -u uv latest
+    # install specific deps
+    mise use uv@0.7.18
     ```
 
 #### uv
 
-* Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not using `asdf`
+* Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not using `mise`
 * Usage
    
     ```bash
@@ -101,9 +88,6 @@ Additional tooling includes but is not limited to:
 
     # activate venv
     source .venv/bin/activate
-
-    # install dependencies
-    uv pip install -r pyproject.toml
 
     # install with extras (for development)
     uv pip install -r pyproject.toml --all-extras
@@ -115,7 +99,7 @@ Additional tooling includes but is not limited to:
     uv add --optional dev <package>
 
     # export requirements.txt from pyproject.toml
-    uv pip compile pyproject.toml -o requirements.txt
+    uv pip freeze > requirements.txt
 
     # run program
     python main.py
@@ -136,7 +120,7 @@ Additional tooling includes but is not limited to:
 
 #### ruff
 
-* Installed via `poetry` or `pip`
+* Installed via `uv` or `pip`
 * Add VSCode plugin for [ruff](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff)
   * **Optional**: disable pylance in favor of ruff in [repo settings](.vscode/settings.json)
     ```json
