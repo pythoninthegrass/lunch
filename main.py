@@ -87,9 +87,7 @@ def create_app(page: ft.Page):
                 add_restaurant_to_db(restaurant_name, opt or option)
 
                 # Show a confirmation
-                result_text.value = (
-                    f"Added restaurant: {restaurant_name} ({opt or option})"
-                )
+                result_text.value = f"Added restaurant: {restaurant_name} ({opt or option})"
 
                 # Close the bottom sheet
                 close_bs()
@@ -118,13 +116,11 @@ def create_app(page: ft.Page):
                     option_radio,
                     ft.Row(
                         [
+                            ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
                             ft.ElevatedButton(
                                 "Add",
-                                on_click=lambda e: add_restaurant_confirm(
-                                    e, option_radio.value
-                                ),
+                                on_click=lambda e: add_restaurant_confirm(e, option_radio.value),
                             ),
-                            ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
                         ],
                         alignment=ft.MainAxisAlignment.END,
                     ),
@@ -241,9 +237,7 @@ def create_app(page: ft.Page):
                 alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
-                ft.ElevatedButton(
-                    "List All", on_click=lambda e: show_list_all_sheet()
-                ),
+                ft.ElevatedButton("List All", on_click=lambda e: show_list_all_sheet()),
                 alignment=ft.Alignment(0.0, 0.0),
             ),
         ],
