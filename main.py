@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import flet as ft
-from utils.db import (
+from backend.db import (
     add_restaurant_to_db,
     calculate_lunch,
     create_db_and_tables,
@@ -9,253 +9,63 @@ from utils.db import (
     get_all_restaurants,
     rng_restaurant,
 )
+from backend.service import RestaurantService
+from frontend.gui import create_gui
+
+
+class DatabaseManager:
+    """Database manager wrapper for dependency injection."""
+
+    def create_db_and_tables(self):
+        return create_db_and_tables()
+
+    def get_all_restaurants(self):
+        return get_all_restaurants()
+
+    def get_restaurants(self, option):
+        from backend.db import get_restaurants
+
+        return get_restaurants(option)
+
+    def add_restaurant_to_db(self, name, option):
+        return add_restaurant_to_db(name, option)
+
+    def delete_restaurant_from_db(self, name):
+        return delete_restaurant_from_db(name)
+
+    def calculate_lunch(self, option, session_rolled):
+        return calculate_lunch(option, session_rolled)
+
+    def rng_restaurant(self, option):
+        return rng_restaurant(option)
 
 
 def create_app(page: ft.Page):
-    page.title = "Lunch"
-    page.window_width = 650
-    page.window_height = 400
-    page.vertical_alignment = "center"
-    page.horizontal_alignment = "center"
-    page.padding = 10
-    page.background_color = ft.Colors.WHITE
+    """Create and initialize the lunch application."""
+    # Initialize backend service
+    db_manager = DatabaseManager()
+    restaurant_service = RestaurantService(db_manager)
+    restaurant_service.initialize()
 
-    # Create database and tables if they don't exist
-    create_db_and_tables()
+    # Create frontend GUI
+    gui = create_gui(page)
 
-    # Create text controls
-    title_text = ft.Text("Click below to find out what's for Lunch:")
-    result_text = ft.Text()
+    # Define callback functions for GUI
+    def roll_lunch_callback(category: str) -> str:
+        restaurant = restaurant_service.select_restaurant(category)
+        return restaurant[0]
 
-    # Create radio button group for options
-    option = "Normal"  # Default option
-    
-    # Session state for round-robin tracking
-    session_rolled_restaurants = {"cheap": set(), "Normal": set()}
+    def add_restaurant_callback(name: str, category: str) -> str:
+        return restaurant_service.add_restaurant(name, category)
 
-    def option_changed(e):
-        nonlocal option
-        option = e.control.value
-        page.update()
+    def delete_restaurant_callback(name: str) -> str:
+        return restaurant_service.delete_restaurant(name)
 
-    radio_group = ft.RadioGroup(
-        content=ft.Row(
-            [
-                ft.Container(
-                    ft.Radio(value="cheap", label="Cheap"),
-                    alignment=ft.Alignment(0.0, 0.0),
-                ),
-                ft.Container(
-                    ft.Radio(value="Normal", label="Normal"),
-                    alignment=ft.Alignment(0.0, 0.0),
-                ),
-            ],
-            alignment=ft.MainAxisAlignment.CENTER,
-        ),
-        value="Normal",
-        on_change=option_changed,
-    )
+    def get_all_restaurants_callback():
+        return restaurant_service.get_all_restaurants()
 
-    # Bottom sheet for adding/deleting restaurants
-    bottom_sheet = ft.BottomSheet(
-        ft.Container(
-            ft.Column(
-                [
-                    ft.Text("", size=16),
-                    ft.ElevatedButton("Close", on_click=lambda e: close_bs()),
-                ],
-                tight=True,
-            ),
-            padding=10,
-        ),
-        open=False,
-    )
-    page.overlay.append(bottom_sheet)
-
-    # Methods for bottom sheet operations
-    def close_bs():
-        bottom_sheet.open = False
-        page.update()
-
-    def show_add_restaurant_sheet():
-        entry_field = ft.TextField(label="Restaurant Name")
-
-        def add_restaurant_confirm(e, opt):
-            try:
-                restaurant_name = entry_field.value
-                if not restaurant_name:
-                    return
-
-                # Add restaurant to database
-                add_restaurant_to_db(restaurant_name, opt or option)
-
-                # Show a confirmation
-                result_text.value = f"Added restaurant: {restaurant_name} ({opt or option})"
-
-                # Close the bottom sheet
-                close_bs()
-                page.update()
-            except Exception as e:
-                result_text.value = f"Error adding restaurant: {str(e)}"
-                page.update()
-
-        option_radio = ft.RadioGroup(
-            content=ft.Row(
-                [
-                    ft.Radio(value="cheap", label="Cheap"),
-                    ft.Radio(value="Normal", label="Normal"),
-                ]
-            ),
-            value="Normal",
-        )
-
-        # Update bottom sheet content
-        bottom_sheet.content.content.controls = [
-            ft.Column(
-                [
-                    ft.Text("Add New Restaurant", size=16, weight="bold"),
-                    entry_field,
-                    ft.Text("Price Range:"),
-                    option_radio,
-                    ft.Row(
-                        [
-                            ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
-                            ft.ElevatedButton(
-                                "Add",
-                                on_click=lambda e: add_restaurant_confirm(e, option_radio.value),
-                            ),
-                        ],
-                        alignment=ft.MainAxisAlignment.END,
-                    ),
-                ],
-                tight=True,
-            )
-        ]
-
-        bottom_sheet.open = True
-        page.update()
-
-    def show_delete_restaurant_sheet():
-        # Get all restaurants from the database
-        restaurants = get_all_restaurants()
-
-        def delete_restaurant_confirm(e, restaurant):
-            try:
-                # Delete restaurant from database
-                delete_restaurant_from_db(restaurant[0])
-
-                # Show a confirmation
-                result_text.value = f"Deleted restaurant: {restaurant[0]}"
-
-                # Close the bottom sheet
-                close_bs()
-                page.update()
-            except Exception as e:
-                result_text.value = f"Error deleting restaurant: {str(e)}"
-                page.update()
-
-        # Create a column with all restaurants as buttons
-        restaurant_buttons = []
-        for restaurant in restaurants:
-            restaurant_buttons.append(
-                ft.ElevatedButton(
-                    f"{restaurant[0]} ({restaurant[1]})",
-                    on_click=lambda e, r=restaurant: delete_restaurant_confirm(e, r),
-                    data=restaurant,
-                )
-            )
-
-        # Update bottom sheet content
-        bottom_sheet.content.content.controls = [
-            ft.Column(
-                [
-                    ft.Text("Select Restaurant to Delete", size=16, weight="bold"),
-                    ft.Column(restaurant_buttons, scroll=True, height=300),
-                    ft.ElevatedButton("Cancel", on_click=lambda e: close_bs()),
-                ],
-                tight=True,
-            )
-        ]
-
-        bottom_sheet.open = True
-        page.update()
-
-    def show_list_all_sheet():
-        # Get all restaurants from the database
-        restaurants = get_all_restaurants()
-
-        # Create a column with all restaurants
-        restaurant_items = []
-        for restaurant in restaurants:
-            restaurant_items.append(ft.Text(f"{restaurant[0]} ({restaurant[1]})"))
-
-        # Update bottom sheet content
-        bottom_sheet.content.content.controls = [
-            ft.Column(
-                [
-                    ft.Text("All Restaurants", size=16, weight="bold"),
-                    ft.Column(restaurant_items, scroll=True, height=300),
-                    ft.ElevatedButton("Close", on_click=lambda e: close_bs()),
-                ],
-                tight=True,
-            )
-        ]
-
-        bottom_sheet.open = True
-        page.update()
-
-    def roll_lunch(e):
-        """Select a restaurant for lunch using round-robin logic"""
-        try:
-            # Get calculated restaurant using round-robin logic
-            restaurant = calculate_lunch(option, session_rolled_restaurants[option])
-
-            # Update the result text
-            result_text.value = f"Today's lunch: {restaurant[0]}"
-            page.update()
-        except ValueError as ve:
-            # Handle specific case when no restaurants found
-            if "No restaurants found" in str(ve):
-                result_text.value = f"No {option.lower()} restaurants available. Click 'Add Restaurant' to add some!"
-            else:
-                result_text.value = f"Error: {str(ve)}"
-            page.update()
-        except Exception as e:
-            # Handle other errors
-            result_text.value = f"Error selecting restaurant: {str(e)}"
-            page.update()
-
-    # Create action buttons
-    button_row = ft.Row(
-        controls=[
-            ft.Container(
-                ft.ElevatedButton("Roll Lunch", on_click=roll_lunch),
-                alignment=ft.Alignment(0.0, 0.0),
-            ),
-            ft.Container(
-                ft.ElevatedButton(
-                    "Delete Restaurant",
-                    on_click=lambda e: show_delete_restaurant_sheet(),
-                ),
-                alignment=ft.Alignment(0.0, 0.0),
-            ),
-            ft.Container(
-                ft.ElevatedButton(
-                    "Add Restaurant",
-                    on_click=lambda e: show_add_restaurant_sheet(),
-                ),
-                alignment=ft.Alignment(0.0, 0.0),
-            ),
-            ft.Container(
-                ft.ElevatedButton("List All", on_click=lambda e: show_list_all_sheet()),
-                alignment=ft.Alignment(0.0, 0.0),
-            ),
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,
-    )
-
-    # Add all controls to the page
-    page.add(title_text, radio_group, button_row, result_text)
+    # Set callbacks in GUI
+    gui.set_callbacks(roll_lunch_callback, add_restaurant_callback, delete_restaurant_callback, get_all_restaurants_callback)
 
 
 if __name__ == "__main__":

@@ -196,15 +196,15 @@ def calculate_lunch(option="Normal", session_rolled=None):
         # Initialize session_rolled if not provided
         if session_rolled is None:
             session_rolled = set()
-        
+
         # Find restaurants not yet rolled in this session
         unrolled = [r for r in restaurants if r[0] not in session_rolled]
-        
+
         # If all restaurants have been rolled, reset the session for this option
         if not unrolled:
             session_rolled.clear()
             unrolled = restaurants
-        
+
         # Get the most recently selected restaurant to avoid immediate repetition
         cursor.execute("""
             SELECT restaurants FROM recent_lunch 
@@ -213,27 +213,27 @@ def calculate_lunch(option="Normal", session_rolled=None):
         """)
         last_result = cursor.fetchone()
         last_restaurant = last_result[0] if last_result else None
-        
+
         # Filter out the last restaurant from unrolled options
         available = [r for r in unrolled if r[0] != last_restaurant]
-        
+
         # If only the last restaurant is left unrolled, we have to use it
         if not available and unrolled:
             available = unrolled
-            
+
         # If no restaurants available (shouldn't happen), use all
         if not available:
             available = restaurants
-            
+
         # Select a random restaurant from available options
         chosen = random.choice(available)
-        
+
         # Add to session rolled set
         session_rolled.add(chosen[0])
-        
+
         # Add to recent lunches database
         add_to_recent_lunch(chosen[0])
-        
+
         return chosen
     except Exception as e:
         print(f"Error calculating lunch: {e}")
