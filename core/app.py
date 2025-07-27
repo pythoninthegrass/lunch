@@ -158,7 +158,7 @@ def create_app(page: ft.Page):
         for restaurant in restaurants:
             restaurant_buttons.append(
                 ft.ElevatedButton(
-                    text=f"{restaurant[0]} ({restaurant[1]})",
+                    f"{restaurant[0]} ({restaurant[1]})",
                     on_click=lambda e, r=restaurant: delete_restaurant_confirm(e, r),
                     data=restaurant,
                 )
@@ -221,26 +221,26 @@ def create_app(page: ft.Page):
     button_row = ft.Row(
         controls=[
             ft.Container(
-                ft.ElevatedButton(text="Roll Lunch", on_click=roll_lunch),
+                ft.ElevatedButton("Roll Lunch", on_click=roll_lunch),
                 alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
                 ft.ElevatedButton(
-                    text="Delete Restaurant",
+                    "Delete Restaurant",
                     on_click=lambda e: show_delete_restaurant_sheet(),
                 ),
                 alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
                 ft.ElevatedButton(
-                    text="Add Restaurant",
+                    "Add Restaurant",
                     on_click=lambda e: show_add_restaurant_sheet(),
                 ),
                 alignment=ft.Alignment(0.0, 0.0),
             ),
             ft.Container(
                 ft.ElevatedButton(
-                    text="List All", on_click=lambda e: show_list_all_sheet()
+                    "List All", on_click=lambda e: show_list_all_sheet()
                 ),
                 alignment=ft.Alignment(0.0, 0.0),
             ),
