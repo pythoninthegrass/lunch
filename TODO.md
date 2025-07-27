@@ -1,8 +1,5 @@
 # TODO
 
-* Fix
-  * `Error calculating lunch: No restaurants found with option: Normal`
-    * Happens when there are no restaurants in the table
 * UI/UX
   * Never roll the same option twice in a row
   * Clear last roll output after

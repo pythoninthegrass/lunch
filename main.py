@@ -210,8 +210,15 @@ def create_app(page: ft.Page):
             # Update the result text
             result_text.value = f"Today's lunch: {restaurant[0]}"
             page.update()
+        except ValueError as ve:
+            # Handle specific case when no restaurants found
+            if "No restaurants found" in str(ve):
+                result_text.value = f"No {option.lower()} restaurants available. Click 'Add Restaurant' to add some!"
+            else:
+                result_text.value = f"Error: {str(ve)}"
+            page.update()
         except Exception as e:
-            # Handle error (e.g., no restaurants found)
+            # Handle other errors
             result_text.value = f"Error selecting restaurant: {str(e)}"
             page.update()
 
