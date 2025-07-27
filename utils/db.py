@@ -65,9 +65,7 @@ def get_all_restaurants():
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
-        cursor.execute(
-            "SELECT restaurants, option FROM lunch_list ORDER BY restaurants"
-        )
+        cursor.execute("SELECT restaurants, option FROM lunch_list ORDER BY restaurants")
         return cursor.fetchall()
     except Exception as e:
         print(f"Error getting restaurants: {e}")
@@ -164,9 +162,7 @@ def add_to_recent_lunch(restaurant_name):
 
         # Add the new restaurant
         now = datetime.now().isoformat()
-        cursor.execute(
-            "INSERT OR REPLACE INTO recent_lunch VALUES (?, ?)", (restaurant_name, now)
-        )
+        cursor.execute("INSERT OR REPLACE INTO recent_lunch VALUES (?, ?)", (restaurant_name, now))
 
         conn.commit()
         return True
@@ -180,8 +176,8 @@ def add_to_recent_lunch(restaurant_name):
             conn.close()
 
 
-def calculate_lunch(option="Normal"):
-    """Select a restaurant for lunch considering recent history"""
+def calculate_lunch(option="Normal", session_rolled=None):
+    """Select a restaurant using round-robin logic within the session"""
     conn = None
     try:
         conn = sqlite3.connect(db_path)
@@ -197,35 +193,58 @@ def calculate_lunch(option="Normal"):
         if not restaurants:
             raise ValueError(f"No restaurants found with option: {option}")
 
-        # If fewer than 15 restaurants, just pick a random one
-        if len(restaurants) < 15:
-            chosen = random.choice(restaurants)
-            add_to_recent_lunch(chosen[0])
-            return chosen
-
-        # Get recent lunch choices
-        cursor.execute("SELECT restaurants FROM recent_lunch")
-        recent = [row[0] for row in cursor.fetchall()]
-
-        # Find restaurants that haven't been chosen recently
-        available = [r for r in restaurants if r[0] not in recent]
-
-        # If all have been chosen recently, pick a random one
+        # Initialize session_rolled if not provided
+        if session_rolled is None:
+            session_rolled = set()
+        
+        # Find restaurants not yet rolled in this session
+        unrolled = [r for r in restaurants if r[0] not in session_rolled]
+        
+        # If all restaurants have been rolled, reset the session for this option
+        if not unrolled:
+            session_rolled.clear()
+            unrolled = restaurants
+        
+        # Get the most recently selected restaurant to avoid immediate repetition
+        cursor.execute("""
+            SELECT restaurants FROM recent_lunch 
+            ORDER BY date DESC 
+            LIMIT 1
+        """)
+        last_result = cursor.fetchone()
+        last_restaurant = last_result[0] if last_result else None
+        
+        # Filter out the last restaurant from unrolled options
+        available = [r for r in unrolled if r[0] != last_restaurant]
+        
+        # If only the last restaurant is left unrolled, we have to use it
+        if not available and unrolled:
+            available = unrolled
+            
+        # If no restaurants available (shouldn't happen), use all
         if not available:
-            chosen = random.choice(restaurants)
-        else:
-            chosen = random.choice(available)
-
-        # Add to recent lunches
+            available = restaurants
+            
+        # Select a random restaurant from available options
+        chosen = random.choice(available)
+        
+        # Add to session rolled set
+        session_rolled.add(chosen[0])
+        
+        # Add to recent lunches database
         add_to_recent_lunch(chosen[0])
-
+        
         return chosen
     except Exception as e:
         print(f"Error calculating lunch: {e}")
+        # Re-raise if it's a ValueError about no restaurants
+        if isinstance(e, ValueError) and "No restaurants found" in str(e):
+            raise e
         # Fallback to simple random selection
-        return (
-            random.choice(get_restaurants(option)) if get_restaurants(option) else None
-        )
+        restaurants = get_restaurants(option)
+        if not restaurants:
+            raise ValueError(f"No restaurants found with option: {option}")
+        return random.choice(restaurants)
     finally:
         if conn:
             conn.close()

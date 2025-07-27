@@ -29,6 +29,9 @@ def create_app(page: ft.Page):
 
     # Create radio button group for options
     option = "Normal"  # Default option
+    
+    # Session state for round-robin tracking
+    session_rolled_restaurants = {"cheap": set(), "Normal": set()}
 
     def option_changed(e):
         nonlocal option
@@ -202,10 +205,10 @@ def create_app(page: ft.Page):
         page.update()
 
     def roll_lunch(e):
-        """Select a restaurant for lunch based on the selected option and history"""
+        """Select a restaurant for lunch using round-robin logic"""
         try:
-            # Get calculated restaurant from database
-            restaurant = calculate_lunch(option)
+            # Get calculated restaurant using round-robin logic
+            restaurant = calculate_lunch(option, session_rolled_restaurants[option])
 
             # Update the result text
             result_text.value = f"Today's lunch: {restaurant[0]}"

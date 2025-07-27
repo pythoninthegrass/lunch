@@ -1,10 +1,6 @@
 # TODO
 
 * UI/UX
-  * Never roll the same option twice in a row
-  * Clear last roll output after
-    * 0 seconds after deleting a restaurant
-    * 10 seconds after roll
   * Move "logo" to top left of container
 * Build
   * justfile -> taskfile
