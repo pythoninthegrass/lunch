@@ -58,6 +58,10 @@ class RestaurantService:
         Returns the selected restaurant or raises exception.
         """
         try:
+            # Ensure category exists in session tracking
+            if category not in self.session_rolled_restaurants:
+                self.session_rolled_restaurants[category] = set()
+            
             restaurant = self.db.calculate_lunch(category, self.session_rolled_restaurants[category])
             return restaurant
         except ValueError as e:
