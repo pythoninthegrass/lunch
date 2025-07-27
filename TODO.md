@@ -16,18 +16,12 @@
     * Build
   * ArgoCD / Flux
 * Test
-  * Unit tests
-  * Integration tests
+  * ~~Integration tests~~
   * E2E tests
 * Package
   * Web
-    * Fly.io
     * Self-host
-  * Desktop [Tauri](https://v1.tauri.app/) 
-    * macOS
-    * Linux
-    * Windows
-  * Mobile (TBD)
+  * Mobile
     * iOS
     * Android
 * Extend
