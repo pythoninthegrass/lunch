@@ -249,4 +249,4 @@ def create_app(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.app(target=create_app)
+    ft.run(create_app)
