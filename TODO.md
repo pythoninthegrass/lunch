@@ -1,7 +1,5 @@
 # TODO
 
-* Document
-  * Fill out [README.md](README.md#further-reading)
 * Fix
   * `Error calculating lunch: No restaurants found with option: Normal`
     * Happens when there are no restaurants in the table
