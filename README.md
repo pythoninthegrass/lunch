@@ -84,7 +84,7 @@ Additional tooling includes but is not limited to:
    
     ```bash
     # create a venv w/system python (./.venv)
-    uv venv
+    uv venv --python ">=3.12,<3.13"
 
     # activate venv
     source .venv/bin/activate
@@ -157,6 +157,9 @@ pre-commit install
 
 # update
 pre-commit autoupdate
+
+# skip hooks
+git commit -m "docs: udpate readme" --no-verify
 ```
 
 #### editorconfig
