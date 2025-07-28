@@ -4,18 +4,17 @@ Tests the full flow from service layer to database operations.
 """
 
 import pytest
-from unittest.mock import patch
-
-from backend.service import RestaurantService
 from backend.db import (
+    add_restaurant_to_db,
+    calculate_lunch,
     create_db_and_tables,
+    delete_restaurant_from_db,
     get_all_restaurants,
     get_restaurants,
-    add_restaurant_to_db,
-    delete_restaurant_from_db,
-    calculate_lunch,
     rng_restaurant,
 )
+from backend.service import RestaurantService
+from unittest.mock import patch
 
 
 class RealDatabaseManager:
@@ -48,8 +47,8 @@ class TestIntegrationOperations:
     
     def setup_method(self):
         """Setup fresh database for each test method."""
-        import tempfile
         import sqlite3
+        import tempfile
         
         # Create a temporary database for this test
         temp_file = tempfile.NamedTemporaryFile(suffix=".db", delete=False)

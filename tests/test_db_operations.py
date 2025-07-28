@@ -3,22 +3,21 @@ Unit tests for database operations.
 Tests database layer functionality with real SQLite operations.
 """
 
-import sqlite3
 import pytest
+import sqlite3
+from backend.db import (
+    add_restaurant_to_db,
+    add_to_recent_lunch,
+    calculate_lunch,
+    create_db_and_tables,
+    delete_restaurant_from_db,
+    get_all_restaurants,
+    get_restaurants,
+    rng_restaurant,
+)
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
-
-from backend.db import (
-    create_db_and_tables,
-    get_all_restaurants,
-    get_restaurants,
-    add_restaurant_to_db,
-    delete_restaurant_from_db,
-    add_to_recent_lunch,
-    calculate_lunch,
-    rng_restaurant,
-)
 
 
 class TestDatabaseOperations:
