@@ -195,7 +195,9 @@ max-complexity = 10
 
 [tool.flet.macos]
 build_arch = "arm64"
-entitlement."com.apple.security.app-sandbox" = false
+entitlement."com.apple.security.app-sandbox" = true
 entitlement."com.apple.security.cs.allow-jit" = true
 entitlement."com.apple.security.network.client" = true
 entitlement."com.apple.security.network.server" = true
+entitlement."com.apple.security.files.user-selected.read-only" = true
+entitlement."com.apple.security.files.user-selected.read-write" = true
