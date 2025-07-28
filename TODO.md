@@ -2,8 +2,6 @@
 
 * UI/UX
   * Move "logo" to top left of container
-* Build
-  * justfile -> taskfile
 * CI/CD
   * Docker
     * Refactor dockerfiles and devcontainer
@@ -19,6 +17,10 @@
   * ~~Integration tests~~
   * E2E tests
 * Package
+  * Desktop
+    * macOS
+    * Linux
+    * Windows
   * Web
     * Self-host
   * Mobile

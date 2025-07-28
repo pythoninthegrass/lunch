@@ -14,6 +14,7 @@ Use `uv run main.py` to run the application with the virtual environment activat
 - `uv add <package>` - Add new dependency
 - `uv add --optional dev <package>` - Add development dependency
 - `uv pip freeze > requirements.txt` - Export requirements
+- Always prefix commands with `uv run` or `source .venv/bin/activate` at the beginning of a session
 
 ### Code Quality & Formatting
 
