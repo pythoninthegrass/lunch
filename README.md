@@ -157,6 +157,9 @@ pre-commit install
 
 # update
 pre-commit autoupdate
+
+# skip hooks
+git commit -m "docs: udpate readme" --no-verify
 ```
 
 #### editorconfig
