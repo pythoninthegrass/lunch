@@ -81,7 +81,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["{{ cookiecutter.python_package_import_name }}"]
+source = ["lunch"]
 omit = [
     "*/tests/*",
     "*/migrations/*",
@@ -188,3 +188,10 @@ docstring-quotes = "double"
 [tool.ruff.lint.mccabe]
 # Unlike Flake8, default to a complexity level of 10.
 max-complexity = 10
+
+[tool.flet.macos]
+build_arch = "arm64"
+entitlement."com.apple.security.app-sandbox" = false
+entitlement."com.apple.security.cs.allow-jit" = true
+entitlement."com.apple.security.network.client" = true
+entitlement."com.apple.security.network.server" = true
