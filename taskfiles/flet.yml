@@ -1,0 +1,159 @@
+version: "3.0"
+
+set: ['e', 'u', 'pipefail']
+shopt: ['globstar']
+
+# env:
+
+vars:
+  BUILD_DIR: '{{.BUILD_DIR | default (printf "%s/build/macos" .ROOT_DIR)}}'
+  APP_NAME: '{{.APP_NAME | default "Lunch"}}'
+  APP_VERSION: '{{.APP_VERSION | default "0.1.0"}}'
+  APP_DESCRIPTION: '{{.APP_DESCRIPTION | default "Restaurant lunch selector"}}'
+  ORG_NAME: '{{.ORG_NAME | default "com.lunch"}}'
+  BUNDLE_ID: '{{.BUNDLE_ID | default "com.lunch.app"}}'
+  MACOS_ARCH: '{{.MACOS_ARCH | default "arm64"}}'
+
+tasks:
+  info:
+    desc: "Show build configuration"
+    cmds:
+      - |
+        cat << EOF
+        Build Configuration:
+          App Name: {{.APP_NAME}}
+          Version: {{.APP_VERSION}}
+          Description: {{.APP_DESCRIPTION}}
+          Organization: {{.ORG_NAME}}
+          Bundle ID: {{.BUNDLE_ID}}
+          Architecture: {{.MACOS_ARCH}}
+          Build Directory: {{.BUILD_DIR}}
+
+        Available build targets:
+          - build: Build for {{.MACOS_ARCH}} (default)
+          - build-clean: Build with cleared cache (slower but thorough)
+          - build-universal: Build universal binary
+          - build-dmg: Create DMG installer
+        EOF
+    silent: true
+
+  clean:
+    desc: "Clean build artifacts"
+    cmds:
+      - rm -rf {{.ROOT_DIR}}/build
+    silent: true
+
+  build-clean:
+    desc: "Clean build and rebuild with cleared cache"
+    cmds:
+      - |
+        echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for macOS ({{.MACOS_ARCH}}) with cleared cache..."
+        flet build macos \
+          "{{.ROOT_DIR}}" \
+          --product "{{.APP_NAME}}" \
+          --description "{{.APP_DESCRIPTION}}" \
+          --bundle-id "{{.BUNDLE_ID}}" \
+          --build-version "{{.APP_VERSION}}" \
+          --arch "{{.MACOS_ARCH}}" \
+          --compile-app \
+          --compile-packages \
+          --cleanup-app \
+          --cleanup-packages \
+          --clear-cache \
+          --verbose
+    env:
+      PIP_INDEX_URL: "https://pypi.org/simple"
+      PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
+
+  build:
+    desc: "Build Flet app for macOS"
+    cmds:
+      - |
+        echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for macOS ({{.MACOS_ARCH}})..."
+        flet build macos \
+          "{{.ROOT_DIR}}" \
+          --product "{{.APP_NAME}}" \
+          --description "{{.APP_DESCRIPTION}}" \
+          --bundle-id "{{.BUNDLE_ID}}" \
+          --build-version "{{.APP_VERSION}}" \
+          --arch "{{.MACOS_ARCH}}" \
+          --compile-app \
+          --compile-packages \
+          --cleanup-app \
+          --cleanup-packages \
+          --verbose
+    env:
+      PIP_INDEX_URL: "https://pypi.org/simple"
+      PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
+    sources:
+      - "{{.ROOT_DIR}}/*.py"
+      - "{{.ROOT_DIR}}/utils/**/*.py"
+      - "{{.ROOT_DIR}}/pyproject.toml"
+      - "{{.ROOT_DIR}}/uv.lock"
+    generates:
+      - "{{.BUILD_DIR}}/{{.APP_NAME}}.app/**/*"
+
+  build-dmg:
+    desc: "Create DMG installer for macOS"
+    deps:
+      - build
+    cmds:
+      - |
+        echo "Creating DMG installer..."
+        create-dmg \
+          --volname "{{.APP_NAME}}" \
+          --window-pos 200 120 \
+          --window-size 600 400 \
+          --icon-size 100 \
+          --icon "{{.APP_NAME}}.app" 175 190 \
+          --hide-extension "{{.APP_NAME}}.app" \
+          --app-drop-link 425 190 \
+          "{{.BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg" \
+          "{{.BUILD_DIR}}/{{.APP_NAME}}.app"
+    sources:
+      - "{{.BUILD_DIR}}/{{.APP_NAME}}.app/**/*"
+    generates:
+      - "{{.BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
+    status:
+      - test -f "{{.BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
+
+  run:
+    desc: "Run the Flet app in development mode"
+    cmds:
+      - flet run {{.ROOT_DIR}}/main.py
+    interactive: true
+
+  hot-reload:
+    desc: "Run Flet app with hot reload"
+    cmds:
+      - flet run {{.ROOT_DIR}}/main.py --hot-reload
+    interactive: true
+
+  test-build:
+    desc: "Test the built macOS app"
+    cmds:
+      - open "{{.BUILD_DIR}}/{{.APP_NAME}}.app"
+    preconditions:
+      - test -d "{{.BUILD_DIR}}/{{.APP_NAME}}.app"
+
+  check-deps:
+    desc: "Check if build dependencies are installed"
+    cmds:
+      - |
+        echo "Checking build dependencies..."
+        if ! command -v flet &> /dev/null; then
+          echo "❌ flet CLI not found. Install with: pip install flet"
+          exit 1
+        fi
+        if ! command -v create-dmg &> /dev/null; then
+          echo "⚠️  create-dmg not found. Install with: brew install create-dmg"
+          echo "   (DMG creation will be skipped)"
+        fi
+        echo "✅ Build dependencies satisfied"
+    silent: true
+
+  doctor:
+    desc: "Run Flutter doctor to check development environment"
+    cmds:
+      - flutter doctor
+    interactive: true

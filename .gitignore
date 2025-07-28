@@ -2,6 +2,7 @@
 .htpasswd
 .ruff_cache
 .sesskey
+.task/
 auth/
 lunch.db
 scratch*.*
