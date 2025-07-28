@@ -3,7 +3,12 @@ version: "3.0"
 set: ['e', 'u', 'pipefail']
 shopt: ['globstar']
 
-# env:
+env:
+  PIP_INDEX_URL: "https://pypi.org/simple"
+  PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
+  PIP_CACHE_DIR: "{{.ROOT_DIR}}/.cache/pip"
+  UV_CACHE_DIR: "{{.ROOT_DIR}}/.cache/uv"
+  PUB_CACHE: "{{.ROOT_DIR}}/.cache/pub"
 
 vars:
   BUILD_DIR: '{{.BUILD_DIR | default (printf "%s/build/macos" .ROOT_DIR)}}'
@@ -38,13 +43,16 @@ tasks:
     silent: true
 
   clean:
-    desc: "Clean build artifacts"
+    desc: "Clean build artifacts and package caches"
     cmds:
       - rm -rf {{.ROOT_DIR}}/build
+      - rm -rf {{.ROOT_DIR}}/cache
     silent: true
 
   build-clean:
     desc: "Clean build and rebuild with cleared cache"
+    deps:
+      - clean
     cmds:
       - |
         echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for macOS ({{.MACOS_ARCH}}) with cleared cache..."
@@ -61,9 +69,6 @@ tasks:
           --cleanup-packages \
           --clear-cache \
           --verbose
-    env:
-      PIP_INDEX_URL: "https://pypi.org/simple"
-      PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
 
   build:
     desc: "Build Flet app for macOS"
@@ -77,14 +82,7 @@ tasks:
           --bundle-id "{{.BUNDLE_ID}}" \
           --build-version "{{.APP_VERSION}}" \
           --arch "{{.MACOS_ARCH}}" \
-          --compile-app \
-          --compile-packages \
-          --cleanup-app \
-          --cleanup-packages \
           --verbose
-    env:
-      PIP_INDEX_URL: "https://pypi.org/simple"
-      PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
     sources:
       - "{{.ROOT_DIR}}/*.py"
       - "{{.ROOT_DIR}}/utils/**/*.py"
