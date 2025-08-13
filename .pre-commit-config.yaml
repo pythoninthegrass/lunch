@@ -2,12 +2,19 @@ fail_fast: true
 
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.5
+    rev: v0.12.8
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
+        files: \.(py)$
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.45.0
+    hooks:
+      - id: markdownlint
+        args: [--fix, --config, .markdownlint.jsonc]
+        files: \.(md|markdown)$
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
         args: ['--maxkb=1024']
@@ -39,7 +46,6 @@ repos:
         args: [--unsafe]
         files: \.(yaml|yml)$
       - id: pretty-format-json
-        # https://pre-commit.com/#regular-expressions
         args: ['--autofix', '--indent=2', '--no-sort-keys']
         files: \.(json|jsonc)$
         exclude: |
