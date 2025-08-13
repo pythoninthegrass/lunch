@@ -69,10 +69,9 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 ### Development Tools
 
 - **Ruff**: Linting and formatting (replaces black, isort, flake8)
-- **MyPy**: Type checking with strict settings
 - **Pytest**: Testing framework (tests directory not yet implemented)
 - **Pre-commit**: Git hooks for code quality
-- **mise/asdf**: Tool version management
+- **mise**: Tool version management
 
 ### Key Dependencies
 
@@ -82,3 +81,11 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 ## Testing Strategy
 
 The project is configured for pytest with markers for unit, integration, e2e, and benchmark tests. Test files should be placed in a `tests/` directory following the pattern `test_*.py`.
+
+## Context
+
+- Context7 mcp libraries
+  - astral-sh/uv
+  - astral-sh/ruff
+  - flet-dev/flet
+  - taskfile_dev
