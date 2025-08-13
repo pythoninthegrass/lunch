@@ -8,11 +8,11 @@ authors = [
 ]
 readme = "README.md"
 
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.12,<3.13"
 
 dependencies = [
     "certifi>=2025.7.14",
-    "flet>=0.70.0.dev5103",
+    "flet>=0.28.3,<0.29.0",
     "msgpack>=1.0.0",
     "sqlalchemy>=2.0.0",
     "sqlmodel>=0.0.8",
@@ -22,7 +22,7 @@ dependencies = [
 dev = [
     "argcomplete<4.0.0,>=3.5.0",
     "deptry<1.0.0,>=0.23.0",
-    "flet[all]>=0.70.0.dev5103",
+    "flet[all]>=0.28.3,<0.29.0",
     "icecream<3.0.0,>=2.1.3",
     "ipython<9.0.0,>=8.27.0",
     "mypy<2.0.0,>=1.14.1",
