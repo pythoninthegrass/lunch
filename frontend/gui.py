@@ -5,7 +5,7 @@ This module contains all Flet UI components and is decoupled from business logic
 
 import flet as ft
 from collections.abc import Callable
-from typing import List, Optional, Tuple
+from typing import Optional
 
 
 class LunchGUI:
@@ -36,6 +36,14 @@ class LunchGUI:
 
     def create_controls(self):
         """Create all UI controls."""
+        # TODO: debug why image isn't being displayed
+        # Banner image
+        self.banner_image = ft.Image(
+            src="banner.png",
+            width=600,
+            fit=ft.ImageFit.NONE,
+        )
+
         # Text controls
         self.title_text = ft.Text("Click below to find out what's for Lunch:")
         self.result_text = ft.Text()
@@ -109,7 +117,11 @@ class LunchGUI:
 
     def setup_layout(self):
         """Add all controls to the page."""
-        self.page.add(self.title_text, self.radio_group, self.button_row, self.result_text)
+        self.page.add(self.banner_image,
+                      self.title_text,
+                      self.radio_group,
+                      self.button_row,
+                      self.result_text)
 
     def set_callbacks(
         self,
