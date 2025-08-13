@@ -118,13 +118,23 @@ tasks:
   run:
     desc: "Run the Flet app in development mode"
     cmds:
-      - flet run {{.ROOT_DIR}}/main.py
+      - |
+        bash -c '
+        source {{.ROOT_DIR}}/.venv/bin/activate
+        flet run {{.ROOT_DIR}}/main.py
+        deactivate
+        '
     interactive: true
 
   hot-reload:
     desc: "Run Flet app with hot reload"
     cmds:
-      - flet run {{.ROOT_DIR}}/main.py --hot-reload
+      - |
+        bash -c '
+        source {{.ROOT_DIR}}/.venv/bin/activate
+        flet run {{.ROOT_DIR}}/main.py --hot-reload
+        deactivate
+        '
     interactive: true
 
   test-build:
