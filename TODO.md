@@ -1,5 +1,7 @@
 # TODO
 
+* General
+  * Fix logo size (cut off at left and right)
 * UI/UX
   * Move "logo" to top left of container
 * CI/CD
@@ -27,9 +29,10 @@
     * iOS
     * Android
 * Extend
-  * sqlite -> ~~postgres~~ [Litestream](https://litestream.io/) / [Turso](https://turso.tech/)
   * Fancy category
   * Images
   * Menus
   * API calls to Yelp, Google, etc.
+    * Maybe just cache info after scraping once
+  * sqlite -> ~~postgres~~ [Litestream](https://litestream.io/) / [Turso](https://turso.tech/)
   * Tinder swipe right/left mechanic hehehe
