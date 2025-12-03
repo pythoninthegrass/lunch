@@ -123,6 +123,7 @@ tasks:
           {{if .DEV}}-r{{end}} \
           {{.ROOT_DIR}}/app/main.py
     interactive: true
+    silent: true
 
   test-build:
     desc: "Test the built macOS app"
