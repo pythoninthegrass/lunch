@@ -7,7 +7,6 @@ env:
   PIP_INDEX_URL: "https://pypi.org/simple"
   PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
   PIP_CACHE_DIR: "{{.ROOT_DIR}}/.cache/pip"
-  UV_CACHE_DIR: "{{.ROOT_DIR}}/.cache/uv"
   PUB_CACHE: "{{.ROOT_DIR}}/.cache/pub"
 
 vars:
@@ -119,22 +118,10 @@ tasks:
     desc: "Run the Flet app in development mode"
     cmds:
       - |
-        bash -c '
-        source {{.ROOT_DIR}}/.venv/bin/activate
-        flet run {{.ROOT_DIR}}/main.py
-        deactivate
-        '
-    interactive: true
-
-  hot-reload:
-    desc: "Run Flet app with hot reload"
-    cmds:
-      - |
-        bash -c '
-        source {{.ROOT_DIR}}/.venv/bin/activate
-        flet run {{.ROOT_DIR}}/main.py --hot-reload
-        deactivate
-        '
+        flet run \
+          -a {{.ROOT_DIR}}/app/static \
+          {{if .DEV}}-r{{end}} \
+          {{.ROOT_DIR}}/app/main.py
     interactive: true
 
   test-build:

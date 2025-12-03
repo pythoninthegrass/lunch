@@ -5,6 +5,7 @@ shopt: ['globstar']
 
 env:
   UV_PROJECT_ENVIRONMENT: ".venv"
+  UV_CACHE_DIR: "{{.ROOT_DIR}}/.cache/uv"
 
 tasks:
   install-uv:
