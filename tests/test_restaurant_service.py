@@ -4,7 +4,7 @@ Tests business logic without database dependencies.
 """
 
 import pytest
-from backend.service import RestaurantService
+from app.backend.service import RestaurantService
 from unittest.mock import Mock
 
 

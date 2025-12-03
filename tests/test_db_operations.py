@@ -5,7 +5,7 @@ Tests database layer functionality with real SQLite operations.
 
 import pytest
 import sqlite3
-from backend.db import (
+from app.backend.db import (
     add_restaurant_to_db,
     add_to_recent_lunch,
     calculate_lunch,
@@ -25,7 +25,7 @@ class TestDatabaseOperations:
     
     def test_create_db_and_tables(self, temp_db):
         """Test database and table creation."""
-        with patch('backend.db.db_path', temp_db):
+        with patch('app.backend.db.db_path', temp_db):
             create_db_and_tables()
             
             # Verify tables were created
@@ -44,14 +44,14 @@ class TestDatabaseOperations:
     
     def test_get_all_restaurants_empty(self, temp_db):
         """Test getting all restaurants from empty database."""
-        with patch('backend.db.db_path', temp_db):
+        with patch('app.backend.db.db_path', temp_db):
             create_db_and_tables()
             result = get_all_restaurants()
             assert result == []
     
     def test_get_all_restaurants_with_data(self, setup_test_db):
         """Test getting all restaurants with existing data."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             result = get_all_restaurants()
             assert len(result) == 6
             assert ("McDonald's", "cheap") in result
@@ -59,7 +59,7 @@ class TestDatabaseOperations:
     
     def test_get_restaurants_by_category(self, setup_test_db):
         """Test getting restaurants filtered by category."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             # Test cheap restaurants
             cheap_restaurants = get_restaurants("cheap")
             assert len(cheap_restaurants) == 3
@@ -76,13 +76,13 @@ class TestDatabaseOperations:
     
     def test_get_restaurants_no_match(self, setup_test_db):
         """Test getting restaurants with non-existent category."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             result = get_restaurants("expensive")
             assert result == []
     
     def test_add_restaurant_success(self, temp_db):
         """Test successful restaurant addition."""
-        with patch('backend.db.db_path', temp_db):
+        with patch('app.backend.db.db_path', temp_db):
             create_db_and_tables()
             result = add_restaurant_to_db("New Restaurant", "Normal")
             assert result is True
@@ -93,13 +93,13 @@ class TestDatabaseOperations:
     
     def test_add_restaurant_duplicate(self, setup_test_db):
         """Test adding duplicate restaurant raises error."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             with pytest.raises(ValueError, match="Restaurant 'McDonald's' already exists"):
                 add_restaurant_to_db("McDonald's", "cheap")
     
     def test_delete_restaurant_success(self, setup_test_db):
         """Test successful restaurant deletion."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             result = delete_restaurant_from_db("McDonald's")
             assert result is True
             
@@ -110,13 +110,13 @@ class TestDatabaseOperations:
     
     def test_delete_restaurant_not_found(self, setup_test_db):
         """Test deleting non-existent restaurant raises error."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             with pytest.raises(ValueError, match="Restaurant 'NonExistent' not found"):
                 delete_restaurant_from_db("NonExistent")
     
     def test_add_to_recent_lunch(self, temp_db):
         """Test adding restaurant to recent lunch list."""
-        with patch('backend.db.db_path', temp_db):
+        with patch('app.backend.db.db_path', temp_db):
             create_db_and_tables()
             result = add_to_recent_lunch("Test Restaurant")
             assert result is True
@@ -132,7 +132,7 @@ class TestDatabaseOperations:
     
     def test_add_to_recent_lunch_limit(self, temp_db):
         """Test recent lunch list maintains 14-item limit."""
-        with patch('backend.db.db_path', temp_db):
+        with patch('app.backend.db.db_path', temp_db):
             create_db_and_tables()
             
             # Add 16 restaurants
@@ -155,27 +155,27 @@ class TestDatabaseOperations:
     
     def test_rng_restaurant_success(self, setup_test_db):
         """Test random restaurant selection."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             restaurant = rng_restaurant("cheap")
             assert restaurant[1] == "cheap"
             assert restaurant[0] in ["McDonald's", "Burger King", "Subway"]
     
     def test_rng_restaurant_no_restaurants(self, setup_test_db):
         """Test random restaurant selection with no matching restaurants."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             with pytest.raises(ValueError, match="No restaurants found with option: expensive"):
                 rng_restaurant("expensive")
     
     def test_calculate_lunch_basic(self, setup_test_db):
         """Test basic lunch calculation."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             restaurant = calculate_lunch("cheap")
             assert restaurant[1] == "cheap"
             assert restaurant[0] in ["McDonald's", "Burger King", "Subway"]
     
     def test_calculate_lunch_round_robin(self, setup_test_db):
         """Test round-robin logic in lunch calculation."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             session_rolled = set()
             
             # First selection
@@ -189,7 +189,7 @@ class TestDatabaseOperations:
     
     def test_calculate_lunch_session_reset(self, setup_test_db):
         """Test session reset when all restaurants have been selected."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             session_rolled = {"McDonald's", "Burger King", "Subway"}  # All cheap restaurants
             
             # Should reset session and select again
@@ -199,13 +199,13 @@ class TestDatabaseOperations:
     
     def test_calculate_lunch_no_restaurants(self, setup_test_db):
         """Test lunch calculation with no matching restaurants."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             with pytest.raises(ValueError, match="No restaurants found with option: expensive"):
                 calculate_lunch("expensive")
     
     def test_calculate_lunch_avoids_recent(self, setup_test_db):
         """Test that lunch calculation avoids recently selected restaurants."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             # Add a recent lunch entry
             add_to_recent_lunch("McDonald's")
             
@@ -233,14 +233,14 @@ class TestDatabaseOperations:
         # Test with invalid database path
         invalid_path = temp_db.parent / "nonexistent" / "invalid.db"
         
-        with patch('backend.db.db_path', invalid_path):
+        with patch('app.backend.db.db_path', invalid_path):
             # Should handle errors gracefully
             result = get_all_restaurants()
             assert result == []
     
     def test_concurrent_operations(self, setup_test_db):
         """Test that database operations work correctly with concurrent access."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             # Simulate concurrent operations
             restaurants_before = len(get_all_restaurants())
             
@@ -253,7 +253,7 @@ class TestDatabaseOperations:
     
     def test_data_integrity(self, setup_test_db):
         """Test data integrity during operations."""
-        with patch('backend.db.db_path', setup_test_db):
+        with patch('app.backend.db.db_path', setup_test_db):
             original_count = len(get_all_restaurants())
             
             # Add restaurant

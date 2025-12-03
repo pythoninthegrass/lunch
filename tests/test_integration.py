@@ -4,7 +4,7 @@ Tests the full flow from service layer to database operations.
 """
 
 import pytest
-from backend.db import (
+from app.backend.db import (
     add_restaurant_to_db,
     calculate_lunch,
     create_db_and_tables,
@@ -13,7 +13,7 @@ from backend.db import (
     get_restaurants,
     rng_restaurant,
 )
-from backend.service import RestaurantService
+from app.backend.service import RestaurantService
 from unittest.mock import patch
 
 
@@ -89,7 +89,7 @@ class TestIntegrationOperations:
         conn.close()
         
         # Start the patch for this test
-        self.patcher = patch('backend.db.db_path', self.temp_db_path)
+        self.patcher = patch('app.backend.db.db_path', self.temp_db_path)
         self.patcher.start()
         
         # Initialize service
