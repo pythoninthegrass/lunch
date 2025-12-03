@@ -27,7 +27,7 @@ class LunchGUI:
     def setup_page(self):
         """Configure the main page settings."""
         self.page.title = "Lunch"
-        self.page.window_width = 650
+        self.page.window_width = 800
         self.page.window_height = 400
         self.page.vertical_alignment = "center"
         self.page.horizontal_alignment = "center"
@@ -36,12 +36,14 @@ class LunchGUI:
 
     def create_controls(self):
         """Create all UI controls."""
-        # TODO: debug why image isn't being displayed
         # Banner image
-        self.banner_image = ft.Image(
-            src="banner.png",
-            width=600,
-            fit=ft.ImageFit.NONE,
+        self.banner_image = ft.Container(
+            content=ft.Image(
+                src="banner.png",
+                width=500,
+                fit=ft.ImageFit.CONTAIN,
+            ),
+            shadow=None,
         )
 
         # Text controls

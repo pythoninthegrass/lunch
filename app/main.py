@@ -11,6 +11,7 @@ from backend.db import (
 )
 from backend.service import RestaurantService
 from frontend.gui import create_gui
+from pathlib import Path
 
 
 class DatabaseManager:
@@ -65,11 +66,9 @@ def create_app(page: ft.Page):
         return restaurant_service.get_all_restaurants()
 
     # Set callbacks in GUI
-    gui.set_callbacks(roll_lunch_callback,
-                      add_restaurant_callback,
-                      delete_restaurant_callback,
-                      get_all_restaurants_callback)
+    gui.set_callbacks(roll_lunch_callback, add_restaurant_callback, delete_restaurant_callback, get_all_restaurants_callback)
 
 
 if __name__ == "__main__":
-    ft.app(create_app, assets_dir="static")
+    assets_dir = Path(__file__).parent / "static"
+    ft.app(create_app, assets_dir=str(assets_dir))

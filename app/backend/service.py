@@ -3,7 +3,7 @@ Restaurant service module containing all business logic for restaurant managemen
 This module is decoupled from the frontend and handles all restaurant operations.
 """
 
-from typing import List, Optional, Set, Tuple
+from typing import Optional
 
 
 class RestaurantService:
@@ -61,7 +61,7 @@ class RestaurantService:
             # Ensure category exists in session tracking
             if category not in self.session_rolled_restaurants:
                 self.session_rolled_restaurants[category] = set()
-            
+
             restaurant = self.db.calculate_lunch(category, self.session_rolled_restaurants[category])
             return restaurant
         except ValueError as e:
