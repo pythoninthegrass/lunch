@@ -1,15 +1,17 @@
 ---
 id: task-003
 title: Integrate pydantic-ai duckduckgo_search_tool for restaurant info lookup
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2025-12-02 23:53'
+updated_date: '2025-12-03 17:02'
 labels:
   - feature
   - ai
   - database
 dependencies: []
 priority: medium
+ordinal: 1000
 ---
 
 ## Description

@@ -1,14 +1,16 @@
 ---
 id: task-001
 title: 'Restructure project: move backend, frontend, static to app directory'
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-12-02 23:53'
+updated_date: '2025-12-03 15:32'
 labels:
   - refactor
   - architecture
 dependencies: []
 priority: high
+ordinal: 1000
 ---
 
 ## Description
