@@ -396,26 +396,25 @@ class TestRestaurantInfoOperations:
 
     def test_get_restaurant_info_ttl_from_config(self, setup_test_db):
         """Test that TTL defaults to config value when not specified."""
-        with patch('app.backend.db.db_path', setup_test_db):
-            with patch('app.config.get_app_config') as mock_config:
-                mock_config.return_value = {"cache_ttl_days": 5}
+        with patch('app.backend.db.db_path', setup_test_db), patch('app.config.get_app_config') as mock_config:
+            mock_config.return_value = {"cache_ttl_days": 5}
 
-                # Insert data 6 days old
-                conn = sqlite3.connect(setup_test_db)
-                cursor = conn.cursor()
-                old_timestamp = (datetime.now() - timedelta(days=6)).isoformat()
-                cursor.execute(
-                    """INSERT INTO restaurant_info
+            # Insert data 6 days old
+            conn = sqlite3.connect(setup_test_db)
+            cursor = conn.cursor()
+            old_timestamp = (datetime.now() - timedelta(days=6)).isoformat()
+            cursor.execute(
+                """INSERT INTO restaurant_info
                        (restaurant_name, address, last_updated)
                        VALUES (?, ?, ?)""",
-                    ("McDonald's", "123 Main St", old_timestamp),
-                )
-                conn.commit()
-                conn.close()
+                ("McDonald's", "123 Main St", old_timestamp),
+            )
+            conn.commit()
+            conn.close()
 
-                # Should be stale with 5-day TTL from config
-                info = get_restaurant_info("McDonald's")
-                assert info is None
+            # Should be stale with 5-day TTL from config
+            info = get_restaurant_info("McDonald's")
+            assert info is None
 
     def test_get_restaurant_info_no_last_updated(self, setup_test_db):
         """Test cache with missing last_updated still returns data."""
