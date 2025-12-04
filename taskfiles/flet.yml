@@ -126,12 +126,23 @@ tasks:
     silent: true
 
   web:
-    desc: "Run the Flet app in development mode"
+    desc: "Run the Flet app in web mode"
     cmds:
       - |
         flet run \
           -a {{.ROOT_DIR}}/app/static \
           --web \
+          {{.ROOT_DIR}}/app/main.py
+    interactive: true
+    silent: true
+
+  ios:
+    desc: "Run the Flet app in iOS mode"
+    cmds:
+      - |
+        flet run \
+          -a {{.ROOT_DIR}}/app/static \
+          --ios \
           {{.ROOT_DIR}}/app/main.py
     interactive: true
     silent: true
