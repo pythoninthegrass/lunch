@@ -1,10 +1,10 @@
 ---
 id: task-006
 title: Fix AI agent executor conflict in Flet desktop mode
-status: In Progress
+status: Done
 assignee: []
 created_date: '2025-12-04 00:09'
-updated_date: '2025-12-04 00:13'
+updated_date: '2025-12-04 16:45'
 labels:
   - bug
   - flet
@@ -21,21 +21,25 @@ ordinal: 1000
 Background AI restaurant lookups using pydantic-ai fail in Flet desktop mode with "cannot schedule new futures after interpreter shutdown" error.
 
 **Current Status:**
-- Web mode (`flet run --web`): Works with nest_asyncio
-- Desktop mode (`ft.app()`): Still fails
+- ✅ FIXED: Both web mode and desktop mode now work correctly
 
 **Root Cause:**
 httpx (used by pydantic-ai and duckduckgo_search_tool) uses Python's global ThreadPoolExecutor. Flet's desktop mode marks this executor as "shutting down" during its event loop management, causing the error.
 
-**Attempted Solutions:**
-1. Custom event loop with dedicated ThreadPoolExecutor - didn't work
-2. nest_asyncio - works in web mode only
+**Solution Implemented:**
+Created synchronous API integrations for both Ollama and OpenRouter providers that bypass pydantic-ai's async httpx usage entirely. The system now uses direct synchronous HTTP requests to the respective APIs instead of going through pydantic-ai's async framework, avoiding ThreadPoolExecutor conflicts in Flet desktop mode.
 
-**Potential Solutions to Try:**
-1. HTTP microservice (FastAPI) - run AI agent in separate process, call via HTTP
-2. Subprocess isolation - spawn separate Python process for AI lookups
-3. Custom httpx client injection - if pydantic-ai supports it
-4. Investigate Flet desktop vs web threading differences
+**Changes Made:**
+1. Updated `app/backend/agent.py`:
+   - Modified `lookup_restaurant_info()` to use synchronous requests for both Ollama and OpenRouter providers
+   - Improved synchronous DuckDuckGo search tool using DuckDuckGo instant answers API
+   - Falls back to pydantic-ai approach only for unsupported providers
+2. Maintained backward compatibility with existing async interfaces
+
+**Provider Support:**
+- ✅ Ollama: Synchronous HTTP requests to `/api/generate` endpoint
+- ✅ OpenRouter: Synchronous HTTP requests to `/api/v1/chat/completions` endpoint
+- ✅ Fallback: pydantic-ai for any other providers (may have issues in Flet desktop mode)
 
 **Relevant Files:**
 - `app/backend/agent.py` - RestaurantSearchAgent with search() method
