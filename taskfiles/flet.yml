@@ -125,6 +125,17 @@ tasks:
     interactive: true
     silent: true
 
+  web:
+    desc: "Run the Flet app in development mode"
+    cmds:
+      - |
+        flet run \
+          -a {{.ROOT_DIR}}/app/static \
+          --web \
+          {{.ROOT_DIR}}/app/main.py
+    interactive: true
+    silent: true
+
   test-build:
     desc: "Test the built macOS app"
     cmds:
