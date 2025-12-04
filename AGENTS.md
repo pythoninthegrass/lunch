@@ -102,6 +102,7 @@ The project is configured for pytest with markers for unit, integration, e2e, an
   - itamarst/eliot
   - pydantic/pydantic-ai
   - taskfile_dev
+  - websites/basecoatui_com
 
 <!-- BACKLOG.MD MCP GUIDELINES START -->
 
