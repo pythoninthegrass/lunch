@@ -6,6 +6,7 @@
 .sesskey
 .task/
 auth/
+CLAUDE.md
 lunch.db
 scratch*.*
 
