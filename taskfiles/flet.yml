@@ -127,6 +127,8 @@ tasks:
 
   web:
     desc: "Run the Flet app in web mode"
+    env:
+      FLET_WEB_RENDERER: canvaskit
     cmds:
       - |
         flet run \
