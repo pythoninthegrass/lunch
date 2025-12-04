@@ -3,6 +3,7 @@ Restaurant service module containing all business logic for restaurant managemen
 This module is decoupled from the frontend and handles all restaurant operations.
 """
 
+import asyncio
 import threading
 from app.backend.db import save_restaurant_info
 from app.backend.logging import setup_logging, start_action
@@ -49,6 +50,22 @@ class RestaurantService:
                 raise
             except Exception as e:
                 raise Exception(f"Error adding restaurant: {str(e)}") from e
+
+    async def lookup_info_async(self, restaurant_name: str) -> None:
+        """Async restaurant info lookup using threading to avoid event loop conflicts.
+
+        This method runs the lookup in a separate thread with its own event loop
+        to avoid ThreadPoolExecutor conflicts with Flet desktop mode.
+        """
+        import concurrent.futures
+
+        def run_lookup():
+            self.lookup_info_sync(restaurant_name)
+
+        # Run the sync lookup in a thread pool
+        loop = asyncio.get_event_loop()
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            await asyncio.wrap_future(executor.submit(run_lookup))
 
     def lookup_info_sync(self, restaurant_name: str) -> None:
         """Sync restaurant info lookup - call with page.run_thread().

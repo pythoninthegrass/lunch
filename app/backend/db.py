@@ -266,8 +266,23 @@ def calculate_lunch(option="Normal", session_rolled=None):
             conn.close()
 
 
-def get_restaurant_info(restaurant_name: str) -> dict | None:
-    """Get stored restaurant info by name."""
+def get_restaurant_info(restaurant_name: str, max_age_days: int | None = None) -> dict | None:
+    """Get stored restaurant info by name.
+
+    Args:
+        restaurant_name: Name of the restaurant to look up
+        max_age_days: Maximum age in days before cache is considered stale.
+                      If None, uses CACHE_TTL_DAYS from config (default 7).
+
+    Returns:
+        Restaurant info dict if found and not stale, None otherwise.
+    """
+    from app.config import get_app_config
+    from datetime import timedelta
+
+    if max_age_days is None:
+        max_age_days = get_app_config()["cache_ttl_days"]
+
     conn = None
     try:
         conn = sqlite3.connect(db_path)
@@ -279,6 +294,13 @@ def get_restaurant_info(restaurant_name: str) -> dict | None:
         row = cursor.fetchone()
 
         if row:
+            last_updated = row[5]
+            # Check if cache is stale
+            if last_updated:
+                updated_dt = datetime.fromisoformat(last_updated)
+                if datetime.now() - updated_dt > timedelta(days=max_age_days):
+                    return None  # Stale - trigger fresh lookup
+
             return {
                 "address": row[0],
                 "phone": row[1],
