@@ -2,13 +2,18 @@
 Structured logging module using Eliot.
 
 Provides ISO-timestamped, causal logging for business logic operations.
+Consolidates all logging configuration (stdlib and eliot) in one place.
 """
 
 import json
+import logging
 import sys
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
+from decouple import config
 from eliot import add_destinations, log_call, start_action, start_task
 from typing import Any
+
+DEBUG = config("DEBUG", default=False, cast=bool)
 
 
 def _format_message(message: dict[str, Any]) -> str:
@@ -47,11 +52,25 @@ _logging_initialized = False
 
 
 def setup_logging() -> None:
-    """Initialize eliot logging to stderr with ISO timestamps. Idempotent."""
+    """Initialize all logging (stdlib and eliot). Idempotent.
+
+    When DEBUG=True: enables stdlib debug logging with timestamps.
+    When DEBUG=False: disables all stdlib logging, deferring to eliot for business logic.
+    """
     global _logging_initialized
     if _logging_initialized:
         return
     _logging_initialized = True
+
+    if DEBUG:
+        logging.basicConfig(
+            format="%(asctime)s %(levelname)-8s %(message)s",
+            level=logging.DEBUG,
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+    else:
+        logging.disable(logging.CRITICAL)
+
     add_destinations(_stderr_destination)
 
 

@@ -7,6 +7,11 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+from backend.logging import setup_logging
+
+# Initialize logging before other imports
+setup_logging()
+
 import flet as ft
 from backend.db import (
     add_restaurant_to_db,
@@ -18,7 +23,6 @@ from backend.db import (
 )
 from backend.service import RestaurantService
 from frontend.gui import create_gui
-from pathlib import Path
 
 
 class DatabaseManager:
