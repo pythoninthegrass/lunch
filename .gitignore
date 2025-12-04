@@ -1,6 +1,8 @@
 # ETC
 .htpasswd
+.playwright-mcp/
 .ruff_cache
+.serena/
 .sesskey
 .task/
 auth/
