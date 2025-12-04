@@ -39,11 +39,11 @@ class LunchGUI:
 
     def create_controls(self):
         """Create all UI controls."""
-        # Banner image
+        # Banner image - responsive width, constrained to not overflow viewport
         self.banner_image = ft.Container(
             content=ft.Image(
                 src="banner.png",
-                width=500,
+                width=350,
                 fit=ft.ImageFit.CONTAIN,
             ),
             shadow=None,
@@ -91,33 +91,24 @@ class LunchGUI:
         )
         self.page.overlay.append(self.bottom_sheet)
 
-        # Action buttons
+        # Action buttons - wrap for mobile responsiveness
         self.button_row = ft.Row(
             controls=[
-                ft.Container(
-                    ft.ElevatedButton("Roll Lunch", on_click=self._on_roll_lunch_clicked),
-                    alignment=ft.Alignment(0.0, 0.0),
+                ft.ElevatedButton("Roll Lunch", on_click=self._on_roll_lunch_clicked),
+                ft.ElevatedButton(
+                    "Delete Restaurant",
+                    on_click=lambda e: self._show_delete_restaurant_sheet(),
                 ),
-                ft.Container(
-                    ft.ElevatedButton(
-                        "Delete Restaurant",
-                        on_click=lambda e: self._show_delete_restaurant_sheet(),
-                    ),
-                    alignment=ft.Alignment(0.0, 0.0),
+                ft.ElevatedButton(
+                    "Add Restaurant",
+                    on_click=lambda e: self._show_add_restaurant_sheet(),
                 ),
-                ft.Container(
-                    ft.ElevatedButton(
-                        "Add Restaurant",
-                        on_click=lambda e: self._show_add_restaurant_sheet(),
-                    ),
-                    alignment=ft.Alignment(0.0, 0.0),
-                ),
-                ft.Container(
-                    ft.ElevatedButton("List All", on_click=lambda e: self._show_list_all_sheet()),
-                    alignment=ft.Alignment(0.0, 0.0),
-                ),
+                ft.ElevatedButton("List All", on_click=lambda e: self._show_list_all_sheet()),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
+            wrap=True,
+            spacing=10,
+            run_spacing=10,
         )
 
     def setup_layout(self):
