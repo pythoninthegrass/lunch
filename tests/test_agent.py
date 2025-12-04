@@ -157,21 +157,41 @@ class TestRestaurantSearchAgent:
 class TestLookupRestaurantInfo:
     """Tests for convenience lookup functions."""
 
-    @patch("app.backend.agent.RestaurantSearchAgent")
+    @patch("requests.post")
+    @patch("app.backend.agent.get_llm_config")
     @patch("app.backend.agent.get_app_config")
-    def test_lookup_restaurant_info_uses_default_config(self, mock_get_config, mock_agent_class):
-        """Test lookup_restaurant_info uses default app config."""
+    def test_lookup_restaurant_info_uses_default_config(self, mock_get_app_config, mock_get_llm_config, mock_post):
+        """Test lookup_restaurant_info uses default app config and calls Ollama API."""
         from app.backend.agent import RestaurantInfo, lookup_restaurant_info
+        from app.config import LLMConfig
 
-        mock_get_config.return_value = {"zip_code": "73107"}
+        mock_get_app_config.return_value = {"zip_code": "73107"}
+        mock_get_llm_config.return_value = LLMConfig(
+            provider="ollama",
+            model="qwen3:8b",
+            temperature=0.7,
+            timeout=30,
+            ollama_host="http://localhost:11434",
+        )
 
-        mock_agent_instance = Mock()
-        mock_agent_instance.search.return_value = RestaurantInfo(address="Test Address")
-        mock_agent_class.return_value = mock_agent_instance
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "response": '{"address": "123 Test St", "phone": "555-1234", "hours": null, "website": null, "description": "A test restaurant"}'
+        }
+        mock_response.raise_for_status = Mock()
+        mock_post.return_value = mock_response
 
         result = lookup_restaurant_info("Test Restaurant")
 
-        mock_get_config.assert_called_once()
-        mock_agent_class.assert_called_once_with(zip_code="73107")
+        mock_get_app_config.assert_called_once()
+        mock_get_llm_config.assert_called_once()
+        mock_post.assert_called_once()
+        # Verify Ollama API was called
+        call_args = mock_post.call_args
+        assert (
+            "http://localhost:11434/api/generate" in call_args[0]
+            or call_args[1].get("url", call_args[0][0]) == "http://localhost:11434/api/generate"
+        )
         assert result is not None
-        assert result.address == "Test Address"
+        assert result.address == "123 Test St"
+        assert result.phone == "555-1234"
