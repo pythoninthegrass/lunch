@@ -88,6 +88,7 @@ The project is configured for pytest with markers for unit, integration, e2e, an
   - astral-sh/uv
   - astral-sh/ruff
   - flet-dev/flet
+  - itamarst/eliot
   - taskfile_dev
 
 <!-- BACKLOG.MD MCP GUIDELINES START -->
