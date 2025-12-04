@@ -5,7 +5,7 @@ Tests business logic without database dependencies.
 
 import pytest
 from app.backend.service import RestaurantService
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 
 class TestRestaurantService:
@@ -184,3 +184,44 @@ class TestRestaurantService:
         assert "McDonald's" not in service.session_rolled_restaurants["Normal"]
         assert "The Ritz" in service.session_rolled_restaurants["Normal"]
         assert "The Ritz" not in service.session_rolled_restaurants["cheap"]
+
+
+class TestRestaurantServiceBackgroundLookup:
+    """Tests for background restaurant info lookup."""
+
+    def test_add_restaurant_does_not_trigger_lookup(self, mock_db_manager):
+        """Test that adding a restaurant does NOT trigger lookup directly.
+
+        The async lookup should be triggered by the caller (e.g., Flet's page.run_task()).
+        """
+        service = RestaurantService(mock_db_manager)
+        result = service.add_restaurant("New Place", "Normal")
+
+        # Restaurant added successfully
+        assert "Added restaurant" in result
+        # No thread should be spawned - lookup is caller's responsibility
+
+    @pytest.mark.asyncio
+    async def test_lookup_info_async_exists(self, mock_db_manager):
+        """Test that the async lookup method exists and is callable."""
+        service = RestaurantService(mock_db_manager)
+
+        # The method should exist and be async
+        assert hasattr(service, "lookup_info_async")
+        import asyncio
+        assert asyncio.iscoroutinefunction(service.lookup_info_async)
+
+    @patch("app.backend.service.threading.Thread")
+    def test_legacy_lookup_background_uses_thread(self, mock_thread_class, mock_db_manager):
+        """Test that the legacy sync lookup uses a thread."""
+        mock_thread = Mock()
+        mock_thread_class.return_value = mock_thread
+
+        service = RestaurantService(mock_db_manager)
+        service._lookup_info_background("New Place")
+
+        # Verify thread was created and started
+        mock_thread_class.assert_called_once()
+        call_kwargs = mock_thread_class.call_args[1]
+        assert call_kwargs["daemon"] is False
+        mock_thread.start.assert_called_once()

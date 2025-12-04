@@ -11,9 +11,12 @@ from app.backend.db import (
     calculate_lunch,
     create_db_and_tables,
     delete_restaurant_from_db,
+    delete_restaurant_info,
     get_all_restaurants,
+    get_restaurant_info,
     get_restaurants,
     rng_restaurant,
+    save_restaurant_info,
 )
 from datetime import datetime
 from pathlib import Path
@@ -113,7 +116,32 @@ class TestDatabaseOperations:
         with patch('app.backend.db.db_path', setup_test_db):
             with pytest.raises(ValueError, match="Restaurant 'NonExistent' not found"):
                 delete_restaurant_from_db("NonExistent")
-    
+
+    def test_delete_restaurant_cascades_to_info(self, setup_test_db):
+        """Test deleting restaurant also deletes associated restaurant_info."""
+        with patch('app.backend.db.db_path', setup_test_db):
+            # Save info for existing restaurant
+            save_restaurant_info(
+                "McDonald's",
+                address="123 Test St",
+                phone="555-1234",
+            )
+
+            # Verify info exists
+            info = get_restaurant_info("McDonald's")
+            assert info is not None
+            assert info["address"] == "123 Test St"
+
+            # Delete restaurant
+            delete_restaurant_from_db("McDonald's")
+
+            # Verify both restaurant and info are deleted
+            all_restaurants = get_all_restaurants()
+            assert ("McDonald's", "cheap") not in all_restaurants
+
+            info_after = get_restaurant_info("McDonald's")
+            assert info_after is None
+
     def test_add_to_recent_lunch(self, temp_db):
         """Test adding restaurant to recent lunch list."""
         with patch('app.backend.db.db_path', temp_db):
@@ -269,3 +297,69 @@ class TestDatabaseOperations:
             restaurant_names = [r[0] for r in restaurants]
             assert "McDonald's" in restaurant_names
             assert "The Ritz" in restaurant_names
+
+
+class TestRestaurantInfoOperations:
+    """Test cases for restaurant_info table operations."""
+
+    def test_save_restaurant_info(self, setup_test_db):
+        """Test saving restaurant info."""
+        with patch('app.backend.db.db_path', setup_test_db):
+            save_restaurant_info(
+                "McDonald's",
+                address="123 Main St",
+                phone="555-1234",
+                hours="9am-10pm",
+                website="https://mcdonalds.com",
+                description="Fast food restaurant",
+            )
+
+            info = get_restaurant_info("McDonald's")
+            assert info is not None
+            assert info["address"] == "123 Main St"
+            assert info["phone"] == "555-1234"
+            assert info["hours"] == "9am-10pm"
+            assert info["website"] == "https://mcdonalds.com"
+            assert info["description"] == "Fast food restaurant"
+            assert info["last_updated"] is not None
+
+    def test_get_restaurant_info_not_found(self, setup_test_db):
+        """Test getting info for non-existent restaurant."""
+        with patch('app.backend.db.db_path', setup_test_db):
+            info = get_restaurant_info("NonExistent Restaurant")
+            assert info is None
+
+    def test_update_restaurant_info(self, setup_test_db):
+        """Test updating existing restaurant info."""
+        with patch('app.backend.db.db_path', setup_test_db):
+            # Save initial info
+            save_restaurant_info("McDonald's", address="123 Main St")
+
+            # Update with new info
+            save_restaurant_info("McDonald's", address="456 Oak Ave", phone="555-9999")
+
+            info = get_restaurant_info("McDonald's")
+            assert info["address"] == "456 Oak Ave"
+            assert info["phone"] == "555-9999"
+
+    def test_delete_restaurant_info(self, setup_test_db):
+        """Test deleting restaurant info."""
+        with patch('app.backend.db.db_path', setup_test_db):
+            # Save info first
+            save_restaurant_info("McDonald's", address="123 Main St")
+            assert get_restaurant_info("McDonald's") is not None
+
+            # Delete it
+            delete_restaurant_info("McDonald's")
+            assert get_restaurant_info("McDonald's") is None
+
+    def test_save_restaurant_info_partial(self, setup_test_db):
+        """Test saving restaurant info with only some fields."""
+        with patch('app.backend.db.db_path', setup_test_db):
+            save_restaurant_info("McDonald's", address="123 Main St")
+
+            info = get_restaurant_info("McDonald's")
+            assert info is not None
+            assert info["address"] == "123 Main St"
+            assert info["phone"] is None
+            assert info["hours"] is None

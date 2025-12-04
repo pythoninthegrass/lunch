@@ -79,6 +79,21 @@ def setup_test_db(temp_db):
     )
     ''')
 
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS restaurant_info (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        restaurant_name TEXT NOT NULL UNIQUE,
+        address TEXT,
+        phone TEXT,
+        hours TEXT,
+        website TEXT,
+        description TEXT,
+        last_updated TEXT,
+        FOREIGN KEY (restaurant_name) REFERENCES lunch_list(restaurants)
+            ON DELETE CASCADE
+    )
+    ''')
+
     # Insert sample data
     sample_data = [
         ("McDonald's", "cheap"),
