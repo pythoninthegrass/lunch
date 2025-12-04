@@ -1,7 +1,9 @@
 # TODO
 
 * General
-  * Fix logo size (cut off at left and right)
+  * ~~Fix logo size (cut off at left and right)~~
+  * Tighten ddg search
+    * restaurant_name doesn't match address/description etc
 * UI/UX
   * Move "logo" to top left of container
 * CI/CD
