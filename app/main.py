@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+import sys
+from pathlib import Path
+
+# Add project root to path for consistent imports
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 import flet as ft
 from backend.db import (
     add_restaurant_to_db,
@@ -41,8 +48,8 @@ class DatabaseManager:
         return rng_restaurant(option)
 
 
-def create_app(page: ft.Page):
-    """Create and initialize the lunch application."""
+async def create_app(page: ft.Page):
+    """Create and initialize the lunch application (async for proper event loop integration)."""
     # Initialize backend service
     db_manager = DatabaseManager()
     restaurant_service = RestaurantService(db_manager)
@@ -57,7 +64,10 @@ def create_app(page: ft.Page):
         return restaurant[0]
 
     def add_restaurant_callback(name: str, category: str) -> str:
-        return restaurant_service.add_restaurant(name, category)
+        result = restaurant_service.add_restaurant(name, category)
+        # Schedule sync lookup in separate thread via Flet's thread scheduler
+        page.run_thread(restaurant_service.lookup_info_sync, name)
+        return result
 
     def delete_restaurant_callback(name: str) -> str:
         return restaurant_service.delete_restaurant(name)

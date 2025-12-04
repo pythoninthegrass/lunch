@@ -34,6 +34,9 @@ DEFAULT_OLLAMA_HOST: str = "http://localhost:11434"
 DEFAULT_TEMPERATURE: float = 0.7
 DEFAULT_TIMEOUT: int = 30
 
+# Application-specific config
+DEFAULT_ZIP_CODE: str = "73107"
+
 
 class ConfigurationError(Exception):
     """Raised when LLM configuration is invalid."""
@@ -137,3 +140,15 @@ def get_provider_info() -> dict:
         info["host"] = None
 
     return info
+
+
+def get_app_config() -> dict:
+    """
+    Get application configuration.
+
+    Returns:
+        dict: Application configuration including zip_code
+    """
+    return {
+        "zip_code": config("RESTAURANT_ZIP_CODE", default=DEFAULT_ZIP_CODE),
+    }

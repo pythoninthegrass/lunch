@@ -4,8 +4,11 @@ This module contains all Flet UI components and is decoupled from business logic
 """
 
 import flet as ft
+from app.backend.logging import setup_logging
 from collections.abc import Callable
-from typing import Optional
+from eliot import log_message
+
+setup_logging()
 
 
 class LunchGUI:
@@ -119,11 +122,7 @@ class LunchGUI:
 
     def setup_layout(self):
         """Add all controls to the page."""
-        self.page.add(self.banner_image,
-                      self.title_text,
-                      self.radio_group,
-                      self.button_row,
-                      self.result_text)
+        self.page.add(self.banner_image, self.title_text, self.radio_group, self.button_row, self.result_text)
 
     def set_callbacks(
         self,
@@ -146,6 +145,7 @@ class LunchGUI:
     def _on_option_changed(self, e):
         """Handle option radio button change."""
         self.current_option = e.control.value
+        log_message(message_type="ui_radio_changed", option=self.current_option)
         self.page.update()
 
     def _close_bottom_sheet(self):
@@ -155,6 +155,7 @@ class LunchGUI:
 
     def _on_roll_lunch_clicked(self, e):
         """Handle roll lunch button click."""
+        log_message(message_type="ui_button_click", button="roll_lunch", option=self.current_option)
         if self.on_roll_lunch:
             try:
                 result = self.on_roll_lunch(self.current_option)
@@ -164,7 +165,11 @@ class LunchGUI:
 
     def _show_add_restaurant_sheet(self):
         """Show the add restaurant modal."""
+        log_message(message_type="ui_button_click", button="add_restaurant")
         entry_field = ft.TextField(label="Restaurant Name")
+
+        def on_add_radio_changed(e):
+            log_message(message_type="ui_radio_changed", context="add_restaurant", option=e.control.value)
 
         option_radio = ft.RadioGroup(
             content=ft.Row(
@@ -174,6 +179,7 @@ class LunchGUI:
                 ]
             ),
             value="Normal",
+            on_change=on_add_radio_changed,
         )
 
         def add_restaurant_confirm(e):
@@ -181,6 +187,7 @@ class LunchGUI:
             if not restaurant_name:
                 return
 
+            log_message(message_type="ui_button_click", button="add_confirm", name=restaurant_name, category=option_radio.value)
             if self.on_add_restaurant:
                 try:
                     result = self.on_add_restaurant(restaurant_name, option_radio.value)
@@ -214,6 +221,7 @@ class LunchGUI:
 
     def _show_delete_restaurant_sheet(self):
         """Show the delete restaurant modal."""
+        log_message(message_type="ui_button_click", button="delete_restaurant")
         if not self.on_get_all_restaurants:
             return
 
@@ -224,6 +232,7 @@ class LunchGUI:
             return
 
         def delete_restaurant_confirm(restaurant):
+            log_message(message_type="ui_button_click", button="delete_confirm", name=restaurant[0])
             if self.on_delete_restaurant:
                 try:
                     result = self.on_delete_restaurant(restaurant[0])
@@ -260,6 +269,7 @@ class LunchGUI:
 
     def _show_list_all_sheet(self):
         """Show the list all restaurants modal."""
+        log_message(message_type="ui_button_click", button="list_all")
         if not self.on_get_all_restaurants:
             return
 

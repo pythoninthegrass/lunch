@@ -32,6 +32,21 @@ def create_db_and_tables():
         )
         ''')
 
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS restaurant_info (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            restaurant_name TEXT NOT NULL UNIQUE,
+            address TEXT,
+            phone TEXT,
+            hours TEXT,
+            website TEXT,
+            description TEXT,
+            last_updated TEXT,
+            FOREIGN KEY (restaurant_name) REFERENCES lunch_list(restaurants)
+                ON DELETE CASCADE
+        )
+        ''')
+
         # Check if lunch_list is empty
         cursor.execute("SELECT COUNT(*) FROM lunch_list")
         count = cursor.fetchone()[0]
@@ -123,11 +138,12 @@ def add_restaurant_to_db(name, option):
 
 
 def delete_restaurant_from_db(name):
-    """Delete a restaurant from the database"""
+    """Delete a restaurant and its info from the database."""
     conn = None
     try:
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
+        cursor.execute("DELETE FROM restaurant_info WHERE restaurant_name = ?", (name,))
         cursor.execute("DELETE FROM lunch_list WHERE restaurants = ?", (name,))
         if cursor.rowcount == 0:
             raise ValueError(f"Restaurant '{name}' not found")
@@ -245,6 +261,95 @@ def calculate_lunch(option="Normal", session_rolled=None):
         if not restaurants:
             raise ValueError(f"No restaurants found with option: {option}")
         return random.choice(restaurants)
+    finally:
+        if conn:
+            conn.close()
+
+
+def get_restaurant_info(restaurant_name: str) -> dict | None:
+    """Get stored restaurant info by name."""
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT address, phone, hours, website, description, last_updated FROM restaurant_info WHERE restaurant_name = ?",
+            (restaurant_name,),
+        )
+        row = cursor.fetchone()
+
+        if row:
+            return {
+                "address": row[0],
+                "phone": row[1],
+                "hours": row[2],
+                "website": row[3],
+                "description": row[4],
+                "last_updated": row[5],
+            }
+        return None
+    except Exception as e:
+        print(f"Error getting restaurant info: {e}")
+        return None
+    finally:
+        if conn:
+            conn.close()
+
+
+def save_restaurant_info(
+    restaurant_name: str,
+    address: str | None = None,
+    phone: str | None = None,
+    hours: str | None = None,
+    website: str | None = None,
+    description: str | None = None,
+) -> None:
+    """Save or update restaurant info."""
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+
+        now = datetime.now().isoformat()
+
+        cursor.execute(
+            '''
+            INSERT INTO restaurant_info
+                (restaurant_name, address, phone, hours, website, description, last_updated)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(restaurant_name) DO UPDATE SET
+                address = excluded.address,
+                phone = excluded.phone,
+                hours = excluded.hours,
+                website = excluded.website,
+                description = excluded.description,
+                last_updated = excluded.last_updated
+        ''',
+            (restaurant_name, address, phone, hours, website, description, now),
+        )
+
+        conn.commit()
+    except Exception as e:
+        print(f"Error saving restaurant info: {e}")
+        if conn:
+            conn.rollback()
+    finally:
+        if conn:
+            conn.close()
+
+
+def delete_restaurant_info(restaurant_name: str) -> None:
+    """Delete restaurant info by name."""
+    conn = None
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM restaurant_info WHERE restaurant_name = ?", (restaurant_name,))
+        conn.commit()
+    except Exception as e:
+        print(f"Error deleting restaurant info: {e}")
+        if conn:
+            conn.rollback()
     finally:
         if conn:
             conn.close()
