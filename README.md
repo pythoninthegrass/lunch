@@ -24,38 +24,38 @@ git clone https://github.com/pythoninthegrass/lunch.git
 cd lunch/
 ```
 
-### Python virtual environment
-
-```bash
-# create virtual environment
-python -m venv .venv
-
-# activate virtual environment
-source .venv/bin/activate
-```
-
 ### Install dependencies
 
 ```bash
-python -m pip install -r requirements.txt
+# sync dependencies from pyproject.toml and uv.lock
+uv sync --all-extras
 ```
 
 ### Run program
 
 ```bash
-python main.py
+uv run app/main.py
+```
+
+#### Taskfile runner
+
+Using [Task](https://taskfile.dev/) runner with predefined configurations:
+
+```bash
+# Desktop app (development mode)
+task flet:run
+
+# Web browser mode
+task flet:web
+
+# iOS simulator
+task flet:ios
 ```
 
 ### Quit program
 
 ```bash
 ctrl + c
-```
-
-### Deactivate virtual environment
-
-```bash
-deactivate
 ```
 
 ## Development
@@ -81,16 +81,13 @@ Additional tooling includes but is not limited to:
 
 * Install [uv](https://docs.astral.sh/uv/getting-started/installation/) if not using `mise`
 * Usage
-   
+
     ```bash
-    # create a venv w/system python (./.venv)
-    uv venv --python ">=3.12,<3.13"
+    # sync dependencies (creates .venv automatically)
+    uv sync
 
-    # activate venv
-    source .venv/bin/activate
-
-    # install with extras (for development)
-    uv pip install -r pyproject.toml --all-extras
+    # install with dev extras
+    uv sync --all-extras
 
     # add new dependency
     uv add <package>
@@ -98,14 +95,11 @@ Additional tooling includes but is not limited to:
     # add optional dependency to dev group
     uv add --optional dev <package>
 
+    # run program
+    uv run app/main.py
+
     # export requirements.txt from pyproject.toml
     uv pip freeze > requirements.txt
-
-    # run program
-    python main.py
-
-    # exit virtual environment
-    deactivate
     ```
 
 #### VSCode
@@ -150,7 +144,7 @@ Additional tooling includes but is not limited to:
 
 ```bash
 # install pre-commit dev dependency
-uv pip install -r pyproject.toml --all-extras
+uv sync --all-extras
 
 # install pre-commit hooks
 pre-commit install
