@@ -44,10 +44,10 @@ This document specifies the requirements for refactoring the Flet-based frontend
 
 #### Acceptance Criteria
 
-1. WHEN the banner image container is rendered, THE LunchGUI SHALL wrap the image in a card-styled container with appropriate padding and border radius.
-2. WHEN modal dialogs (bottom sheets) are displayed, THE LunchGUI SHALL style the dialog content with Basecoat card structure (header, section, footer with consistent padding).
-3. WHEN form inputs are rendered, THE LunchGUI SHALL apply consistent border styling and focus ring appearance matching Basecoat conventions.
-4. WHEN layout spacing is applied, THE LunchGUI SHALL use Basecoat spacing tokens (gap-2, gap-4, gap-6 equivalents) for consistent visual rhythm.
+1. WHEN modal dialogs (bottom sheets) are displayed, THE LunchGUI SHALL style the dialog content with Basecoat card structure (header, body, footer with consistent padding and spacing).
+2. WHEN form inputs are rendered, THE LunchGUI SHALL apply consistent border styling and focus ring appearance matching Basecoat conventions.
+3. WHEN layout spacing is applied, THE LunchGUI SHALL use Basecoat spacing tokens (xs, sm, md, lg, xl) for consistent visual rhythm.
+4. WHEN the banner image is rendered, THE LunchGUI SHALL display the image without additional card styling or borders.
 
 ### Requirement 4
 
