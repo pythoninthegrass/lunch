@@ -1,0 +1,128 @@
+# Implementation Plan
+
+- [ ] 1. Create Theme Module with Basecoat Design Tokens
+  - [ ] 1.1 Create `app/frontend/theme.py` with BasecoatTheme class
+    - Define ColorPalette TypedDict with all semantic color names
+    - Define LIGHT_COLORS and DARK_COLORS dictionaries with Basecoat/Zinc values
+    - Define SPACING tokens (xs=4, sm=8, md=16, lg=24, xl=32)
+    - Define BORDER_RADIUS tokens (sm=4, md=8, lg=12)
+    - Define TYPOGRAPHY tokens (heading, body, label with size/weight)
+    - _Requirements: 1.1, 1.2, 1.3, 1.4_
+  - [ ]* 1.2 Write property test for design token completeness
+    - **Property 1: Design Token Completeness**
+    - **Validates: Requirements 1.1, 1.2, 1.3, 1.4**
+  - [ ] 1.3 Implement `create_light_theme()` and `create_dark_theme()` factory methods
+    - Create ft.Theme with ft.ColorScheme using Basecoat colors
+    - Map semantic colors to Flet's color scheme properties
+    - _Requirements: 6.1, 6.2_
+  - [ ]* 1.4 Write property test for theme mode color validity
+    - **Property 9: Theme Mode Produces Valid Colors**
+    - **Validates: Requirements 6.1, 6.2**
+  - [ ]* 1.5 Write property test for semantic color resolution
+    - **Property 10: Semantic Colors Resolve in Both Themes**
+    - **Validates: Requirements 6.3**
+  - [ ] 1.6 Implement `apply_theme(page)` method with system theme detection
+    - Detect system theme preference
+    - Apply appropriate light/dark theme to page
+    - Set up theme change listener for runtime switching
+    - _Requirements: 6.1, 6.2, 6.4_
+
+- [ ] 2. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 3. Create Styled Component Factories
+  - [ ] 3.1 Create button factory functions in `app/frontend/theme.py`
+    - Implement `create_primary_button(text, on_click)` with filled background
+    - Implement `create_outline_button(text, on_click)` with border styling
+    - Implement `create_destructive_button(text, on_click)` with destructive colors
+    - _Requirements: 2.1, 2.2, 2.3_
+  - [ ]* 3.2 Write property test for primary button styling
+    - **Property 2: Primary Button Styling**
+    - **Validates: Requirements 2.1**
+  - [ ]* 3.3 Write property test for outline button styling
+    - **Property 3: Outline Button Styling**
+    - **Validates: Requirements 2.2**
+  - [ ]* 3.4 Write property test for destructive button styling
+    - **Property 4: Destructive Button Styling**
+    - **Validates: Requirements 2.3**
+  - [ ] 3.5 Create container factory functions
+    - Implement `create_card_container(content)` with padding and border_radius from tokens
+    - Implement `create_modal_content(title, body, actions)` with card structure
+    - _Requirements: 3.1, 3.2_
+  - [ ]* 3.6 Write property test for container styling
+    - **Property 5: Container Styling with Theme Tokens**
+    - **Validates: Requirements 3.1, 3.2**
+  - [ ] 3.7 Create styled input factory
+    - Implement `create_styled_textfield(label)` with border color from tokens
+    - _Requirements: 3.3_
+  - [ ]* 3.8 Write property test for input styling
+    - **Property 6: Input Styling with Theme Tokens**
+    - **Validates: Requirements 3.3**
+
+- [ ] 4. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 5. Refactor LunchGUI to Use Theme and Factories
+  - [ ] 5.1 Update LunchGUI.**init** to apply Basecoat theme
+    - Import BasecoatTheme from theme module
+    - Call `BasecoatTheme.apply_theme(page)` before setup_page()
+    - _Requirements: 1.1, 6.1, 6.2_
+  - [ ] 5.2 Refactor banner image to use card container
+    - Replace raw ft.Container with `create_card_container()`
+    - Apply appropriate padding and border_radius
+    - _Requirements: 3.1_
+  - [ ] 5.3 Refactor action buttons to use button factories
+    - Replace "Roll Lunch" with `create_primary_button()`
+    - Replace "Delete Restaurant", "Add Restaurant", "List All" with `create_outline_button()`
+    - _Requirements: 2.1, 2.2_
+  - [ ] 5.4 Update button_row spacing to use spacing tokens
+    - Import SPACING from theme module
+    - Use SPACING["sm"] or SPACING["md"] for row spacing
+    - _Requirements: 3.4_
+  - [ ]* 5.5 Write property test for layout spacing
+    - **Property 7: Layout Spacing Uses Tokens**
+    - **Validates: Requirements 3.4**
+  - [ ] 5.6 Refactor bottom sheet modals to use modal_content factory
+    - Update _show_add_restaurant_sheet() to use `create_modal_content()`
+    - Update _show_delete_restaurant_sheet() to use `create_modal_content()`
+    - Update _show_list_all_sheet() to use `create_modal_content()`
+    - Use `create_styled_textfield()` for input fields
+    - _Requirements: 3.2, 3.3_
+  - [ ] 5.7 Update radio group styling
+    - Apply consistent spacing using tokens
+    - Ensure radio state management works correctly
+    - _Requirements: 4.5_
+  - [ ]* 5.8 Write property test for radio state management
+    - **Property 8: Radio State Management**
+    - **Validates: Requirements 4.5**
+
+- [ ] 6. Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 7. Verify Existing Functionality
+  - [ ] 7.1 Test roll lunch functionality
+    - Verify clicking "Roll Lunch" executes callback and displays result
+    - _Requirements: 4.1_
+  - [ ] 7.2 Test add restaurant functionality
+    - Verify add dialog opens, accepts input, and persists to database
+    - _Requirements: 4.2_
+  - [ ] 7.3 Test delete restaurant functionality
+    - Verify delete dialog shows restaurants and removes selected one
+    - _Requirements: 4.3_
+  - [ ] 7.4 Test list all functionality
+    - Verify list dialog displays all restaurants in scrollable view
+    - _Requirements: 4.4_
+
+- [ ] 8. Web-Based Visual Testing
+  - [ ] 8.1 Test cross-platform appearance via `task flet:web`
+    - Launch web version and verify Basecoat styling renders correctly
+    - Test viewport resizing for responsive behavior
+    - Capture screenshots for visual verification
+    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+  - [ ] 8.2 Test dark/light theme switching
+    - Verify theme changes apply correctly at runtime
+    - Capture screenshots of both themes
+    - _Requirements: 6.1, 6.2, 6.4_
+
+- [ ] 9. Final Checkpoint - Ensure all tests pass
+  - Ensure all tests pass, ask the user if questions arise.
