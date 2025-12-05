@@ -5,6 +5,13 @@ This module contains all Flet UI components and is decoupled from business logic
 
 import flet as ft
 from app.backend.logging import setup_logging
+from app.frontend.theme import (
+    SPACING,
+    BasecoatTheme,
+    create_outline_button,
+    create_primary_button,
+    create_styled_textfield,
+)
 from collections.abc import Callable
 from eliot import log_message
 
@@ -17,6 +24,7 @@ class LunchGUI:
     def __init__(self, page: ft.Page):
         """Initialize the GUI with a Flet page."""
         self.page = page
+        BasecoatTheme.apply_theme(page)
         self.setup_page()
         self.create_controls()
         self.setup_layout()
@@ -34,8 +42,7 @@ class LunchGUI:
         self.page.window_height = 400
         self.page.vertical_alignment = "center"
         self.page.horizontal_alignment = "center"
-        self.page.padding = 10
-        self.page.background_color = ft.Colors.WHITE
+        self.page.padding = SPACING["md"]
 
     def create_controls(self):
         """Create all UI controls."""
@@ -70,6 +77,7 @@ class LunchGUI:
                     ),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
+                spacing=SPACING["sm"],
             ),
             value="Normal",
             on_change=self._on_option_changed,
@@ -94,21 +102,21 @@ class LunchGUI:
         # Action buttons - wrap for mobile responsiveness
         self.button_row = ft.Row(
             controls=[
-                ft.ElevatedButton("Roll Lunch", on_click=self._on_roll_lunch_clicked),
-                ft.ElevatedButton(
+                create_primary_button("Roll Lunch", on_click=self._on_roll_lunch_clicked),
+                create_outline_button(
                     "Delete Restaurant",
                     on_click=lambda e: self._show_delete_restaurant_sheet(),
                 ),
-                ft.ElevatedButton(
+                create_outline_button(
                     "Add Restaurant",
                     on_click=lambda e: self._show_add_restaurant_sheet(),
                 ),
-                ft.ElevatedButton("List All", on_click=lambda e: self._show_list_all_sheet()),
+                create_outline_button("List All", on_click=lambda e: self._show_list_all_sheet()),
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             wrap=True,
-            spacing=10,
-            run_spacing=10,
+            spacing=SPACING["sm"],
+            run_spacing=SPACING["sm"],
         )
 
     def setup_layout(self):
@@ -157,7 +165,7 @@ class LunchGUI:
     def _show_add_restaurant_sheet(self):
         """Show the add restaurant modal."""
         log_message(message_type="ui_button_click", button="add_restaurant")
-        entry_field = ft.TextField(label="Restaurant Name")
+        entry_field = create_styled_textfield("Restaurant Name")
 
         def on_add_radio_changed(e):
             log_message(message_type="ui_radio_changed", context="add_restaurant", option=e.control.value)
@@ -167,7 +175,8 @@ class LunchGUI:
                 [
                     ft.Radio(value="cheap", label="Cheap"),
                     ft.Radio(value="Normal", label="Normal"),
-                ]
+                ],
+                spacing=SPACING["sm"],
             ),
             value="Normal",
             on_change=on_add_radio_changed,
@@ -197,12 +206,14 @@ class LunchGUI:
                     option_radio,
                     ft.Row(
                         [
-                            ft.ElevatedButton("Cancel", on_click=lambda e: self._close_bottom_sheet()),
-                            ft.ElevatedButton("Add", on_click=add_restaurant_confirm),
+                            create_outline_button("Cancel", on_click=lambda e: self._close_bottom_sheet()),
+                            create_primary_button("Add", on_click=add_restaurant_confirm),
                         ],
                         alignment=ft.MainAxisAlignment.END,
+                        spacing=SPACING["sm"],
                     ),
                 ],
+                spacing=SPACING["md"],
                 tight=True,
             )
         ]
@@ -236,22 +247,34 @@ class LunchGUI:
         restaurant_buttons = []
         for restaurant in restaurants:
             restaurant_buttons.append(
-                ft.ElevatedButton(
+                create_outline_button(
                     f"{restaurant[0]} ({restaurant[1]})",
                     on_click=lambda e, r=restaurant: delete_restaurant_confirm(r),
-                    data=restaurant,
                 )
             )
 
-        # Update bottom sheet content
+        # Calculate available height - use most of page height for modal
+        # Leave room for title (40px) + spacing (48px) + cancel button (40px) = ~130px
+        available_height = (self.page.window_height or 400) - 130
+
+        # Update bottom sheet content with ListView for better scrolling
         self.bottom_sheet.content.content.controls = [
             ft.Column(
                 [
                     ft.Text("Select Restaurant to Delete", size=16, weight="bold"),
-                    ft.Column(restaurant_buttons, scroll=True, height=300),
-                    ft.ElevatedButton("Cancel", on_click=lambda e: self._close_bottom_sheet()),
+                    ft.Container(
+                        content=ft.ListView(
+                            controls=restaurant_buttons,
+                            spacing=SPACING["sm"],
+                            padding=SPACING["sm"],
+                        ),
+                        height=available_height,
+                        border=ft.border.all(1, ft.Colors.with_opacity(0.2, ft.Colors.ON_SURFACE)),
+                        border_radius=SPACING["sm"],
+                    ),
+                    create_outline_button("Cancel", on_click=lambda e: self._close_bottom_sheet()),
                 ],
-                tight=True,
+                spacing=SPACING["md"],
             )
         ]
 
@@ -275,15 +298,28 @@ class LunchGUI:
         for restaurant in restaurants:
             restaurant_items.append(ft.Text(f"{restaurant[0]} ({restaurant[1]})"))
 
-        # Update bottom sheet content
+        # Calculate available height - use most of page height for modal
+        # Leave room for title (40px) + spacing (48px) + close button (40px) = ~130px
+        available_height = (self.page.window_height or 400) - 130
+
+        # Update bottom sheet content with ListView for better scrolling
         self.bottom_sheet.content.content.controls = [
             ft.Column(
                 [
                     ft.Text("All Restaurants", size=16, weight="bold"),
-                    ft.Column(restaurant_items, scroll=True, height=300),
-                    ft.ElevatedButton("Close", on_click=lambda e: self._close_bottom_sheet()),
+                    ft.Container(
+                        content=ft.ListView(
+                            controls=restaurant_items,
+                            spacing=SPACING["sm"],
+                            padding=SPACING["sm"],
+                        ),
+                        height=available_height,
+                        border=ft.border.all(1, ft.Colors.with_opacity(0.2, ft.Colors.ON_SURFACE)),
+                        border_radius=SPACING["sm"],
+                    ),
+                    create_outline_button("Close", on_click=lambda e: self._close_bottom_sheet()),
                 ],
-                tight=True,
+                spacing=SPACING["md"],
             )
         ]
 
