@@ -120,7 +120,6 @@ tasks:
       - |
         flet run \
           -a {{.ROOT_DIR}}/app/static \
-          {{if .DEV}}-r{{end}} \
           {{.ROOT_DIR}}/app/main.py
     interactive: true
     silent: true
