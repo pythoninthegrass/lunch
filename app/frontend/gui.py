@@ -3,9 +3,12 @@ Frontend GUI module for the lunch application.
 This module contains all Flet UI components and is decoupled from business logic.
 """
 
+import contextlib
 import flet as ft
+import re
 from app.backend.logging import setup_logging
 from app.frontend.theme import (
+    LIGHT_COLORS,
     SPACING,
     BasecoatTheme,
     create_outline_button,
@@ -16,6 +19,14 @@ from collections.abc import Callable
 from eliot import log_message
 
 setup_logging()
+
+
+def normalize_name(name: str) -> str:
+    """Normalize a restaurant name for similarity comparison.
+
+    Removes spaces, apostrophes, and other punctuation, then lowercases.
+    """
+    return re.sub(r"[^a-z0-9]", "", name.lower())
 
 
 class LunchGUI:
@@ -165,7 +176,43 @@ class LunchGUI:
     def _show_add_restaurant_sheet(self):
         """Show the add restaurant modal."""
         log_message(message_type="ui_button_click", button="add_restaurant")
-        entry_field = create_styled_textfield("Restaurant Name")
+
+        # Warning text for similar names (initially hidden)
+        warning_text = ft.Text(
+            "",
+            color=LIGHT_COLORS["destructive"],
+            visible=False,
+        )
+
+        # Get existing restaurants for similarity check
+        existing_restaurants = []
+        if self.on_get_all_restaurants:
+            with contextlib.suppress(Exception):
+                existing_restaurants = self.on_get_all_restaurants()
+
+        def on_name_changed(e):
+            """Check for similar names as user types."""
+            name = e.control.value
+            if not name:
+                warning_text.visible = False
+                self.page.update()
+                return
+
+            # Check for similar names
+            normalized_input = normalize_name(name)
+            similar = []
+            for restaurant_name, _ in existing_restaurants:
+                if normalize_name(restaurant_name) == normalized_input and restaurant_name != name:
+                    similar.append(restaurant_name)
+
+            if similar:
+                warning_text.value = f"Similar name exists: {', '.join(similar)}"
+                warning_text.visible = True
+            else:
+                warning_text.visible = False
+            self.page.update()
+
+        entry_field = create_styled_textfield("Restaurant Name", on_change=on_name_changed)
 
         def on_add_radio_changed(e):
             log_message(message_type="ui_radio_changed", context="add_restaurant", option=e.control.value)
@@ -202,6 +249,7 @@ class LunchGUI:
                 [
                     ft.Text("Add New Restaurant", size=16, weight="bold"),
                     entry_field,
+                    warning_text,
                     ft.Text("Price Range:"),
                     option_radio,
                     ft.Row(

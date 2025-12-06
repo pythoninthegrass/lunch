@@ -19,30 +19,37 @@ class RealDatabaseManager:
 
     def create_db_and_tables(self):
         from app.backend.db import create_db_and_tables
+
         return create_db_and_tables()
 
     def get_all_restaurants(self):
         from app.backend.db import get_all_restaurants
+
         return get_all_restaurants()
 
     def get_restaurants(self, option):
         from app.backend.db import get_restaurants
+
         return get_restaurants(option)
 
     def add_restaurant_to_db(self, name, option):
         from app.backend.db import add_restaurant_to_db
+
         return add_restaurant_to_db(name, option)
 
     def delete_restaurant_from_db(self, name):
         from app.backend.db import delete_restaurant_from_db
+
         return delete_restaurant_from_db(name)
 
     def calculate_lunch(self, option, session_rolled):
         from app.backend.db import calculate_lunch
+
         return calculate_lunch(option, session_rolled)
 
     def rng_restaurant(self, option):
         from app.backend.db import rng_restaurant
+
         return rng_restaurant(option)
 
 
@@ -126,6 +133,7 @@ def test_db_setup():
     # Cleanup
     patcher.stop()
     import os
+
     if os.path.exists(temp_db_path):
         os.unlink(temp_db_path)
 
@@ -260,15 +268,15 @@ class TestGUIIntegration:
         # Set restaurant name
         text_field.value = "Integration Test Restaurant"
 
-        # Find the radio group (fourth control in the column)
-        radio_group = modal_content.controls[3]
+        # Find the radio group (fifth control in the column, after warning_text)
+        radio_group = modal_content.controls[4]
         assert isinstance(radio_group, ft.RadioGroup)
 
         # Set category to "Normal"
         radio_group.value = "Normal"
 
         # Find the action row (last control in the column)
-        action_row = modal_content.controls[4]
+        action_row = modal_content.controls[5]
         assert isinstance(action_row, ft.Row)
 
         # Find the "Add" button (second button in the action row)
@@ -474,8 +482,8 @@ class TestGUIIntegration:
         # Leave text field empty
         text_field.value = ""
 
-        # Find the "Add" button
-        action_row = modal_content.controls[4]
+        # Find the "Add" button (action_row is at index 5 after warning_text was added)
+        action_row = modal_content.controls[5]
         add_button = action_row.controls[1]
 
         # Click the add button
@@ -527,3 +535,56 @@ class TestGUIIntegration:
 
         # Verify error message is displayed
         assert "No cheap restaurants available" in gui.result_text.value
+
+    def test_add_restaurant_shows_warning_for_similar_name(self, mock_page, test_db_setup):
+        """
+        Integration test: Verify warning is shown when adding a restaurant with a similar name.
+        **Validates: Requirements 4.2**
+        """
+        # Setup service with real database
+        db_manager = RealDatabaseManager()
+        service = RestaurantService(db_manager)
+        service.initialize()
+
+        # Add existing restaurant
+        service.add_restaurant("Taco Bell", "cheap")
+
+        # Create GUI
+        gui = LunchGUI(mock_page)
+
+        # Wire up callbacks
+        gui.set_callbacks(
+            roll_lunch_callback=lambda category: service.select_restaurant(category)[0],
+            add_restaurant_callback=service.add_restaurant,
+            delete_restaurant_callback=service.delete_restaurant,
+            get_all_restaurants_callback=service.get_all_restaurants,
+        )
+
+        # Open add restaurant dialog
+        gui._show_add_restaurant_sheet()
+
+        # Get the modal content
+        modal_content = gui.bottom_sheet.content.content.controls[0]
+        assert isinstance(modal_content, ft.Column)
+
+        # Find the text field (second control in the column)
+        text_field = modal_content.controls[1]
+        assert isinstance(text_field, ft.TextField)
+
+        # Find the warning text (third control in the column)
+        warning_text = modal_content.controls[2]
+        assert isinstance(warning_text, ft.Text)
+
+        # Warning should be hidden initially
+        assert warning_text.visible is False
+
+        # Simulate typing a similar name by calling on_change handler
+        text_field.value = "TacoBell"
+        mock_event = Mock()
+        mock_event.control = text_field
+        text_field.on_change(mock_event)
+
+        # Warning should now be visible with similar name message
+        assert warning_text.visible is True
+        assert "similar" in warning_text.value.lower()
+        assert "Taco Bell" in warning_text.value
