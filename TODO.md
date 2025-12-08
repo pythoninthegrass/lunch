@@ -1,7 +1,10 @@
 # TODO
 
 * General
-  * ~~Fix logo size (cut off at left and right)~~
+  * Reinstate the roll rotation logic
+    * Keep track of rolls with timestamp
+    * Skip already rolled restaurants until the total of outstanding restaurants have been shown
+    * Choices reset after n days (14 is the default via env var)
   * Tighten ddg search
     * restaurant_name doesn't match address/description etc
 * UI/UX
