@@ -106,13 +106,16 @@ SPACING: SpacingTokens = {
     "xl": 32,  # gap-8
 }
 
-# Border radius tokens (in pixels)
+# Border radius tokens (in pixels) - flat design
 BORDER_RADIUS: BorderRadiusTokens = {
-    "sm": 4,
-    "md": 8,
-    "lg": 12,
+    "sm": 2,
+    "md": 4,
+    "lg": 6,
     "full": 9999,  # pill shape
 }
+
+# Navigation bar constants
+NAV_BAR_HEIGHT = 64
 
 # Typography tokens
 TYPOGRAPHY: dict[str, TypographyScale] = {
@@ -403,3 +406,105 @@ def create_styled_textfield(label: str, **kwargs) -> ft.TextField:
     defaults.update(kwargs)
 
     return ft.TextField(**defaults)
+
+
+def get_colors(is_dark: bool) -> ColorPalette:
+    """Get the color palette for the specified theme mode."""
+    return DARK_COLORS if is_dark else LIGHT_COLORS
+
+
+def apply_theme_mode(page: ft.Page, is_dark: bool) -> None:
+    """Apply theme mode manually (for toggle switch)."""
+    if is_dark:
+        page.theme = BasecoatTheme.create_dark_theme()
+        page.theme_mode = ft.ThemeMode.DARK
+        page.bgcolor = DARK_COLORS["background"]
+    else:
+        page.theme = BasecoatTheme.create_light_theme()
+        page.theme_mode = ft.ThemeMode.LIGHT
+        page.bgcolor = LIGHT_COLORS["background"]
+    page.update()
+
+
+def create_nav_item(
+    icon: str,
+    label: str,
+    is_active: bool,
+    on_click: Any,
+    is_dark: bool = False,
+) -> ft.Container:
+    """
+    Create a navigation bar item with icon and label.
+
+    Args:
+        icon: Flet icon name
+        label: Text label below icon
+        is_active: Whether this item is currently active
+        on_click: Click event handler
+        is_dark: Whether dark mode is active
+
+    Returns:
+        Container with nav item styling
+    """
+    colors = get_colors(is_dark)
+    active_color = colors["primary"]
+    inactive_color = colors["muted_foreground"]
+    current_color = active_color if is_active else inactive_color
+
+    return ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Icon(icon, color=current_color, size=24),
+                ft.Text(label, size=10, color=current_color, weight=ft.FontWeight.W_500 if is_active else None),
+            ],
+            spacing=2,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        ),
+        expand=True,
+        padding=ft.padding.symmetric(vertical=8),
+        on_click=on_click,
+        ink=True,
+    )
+
+
+def create_nav_bar(
+    items: list[dict],
+    active_index: int,
+    on_change: Any,
+    is_dark: bool = False,
+) -> ft.Container:
+    """
+    Create a bottom navigation bar.
+
+    Args:
+        items: List of dicts with 'icon' and 'label' keys
+        active_index: Index of currently active item
+        on_change: Callback function(index) when item is clicked
+        is_dark: Whether dark mode is active
+
+    Returns:
+        Container with navigation bar
+    """
+    colors = get_colors(is_dark)
+
+    nav_items = []
+    for i, item in enumerate(items):
+        nav_items.append(
+            create_nav_item(
+                icon=item["icon"],
+                label=item["label"],
+                is_active=(i == active_index),
+                on_click=lambda e, idx=i: on_change(idx),
+                is_dark=is_dark,
+            )
+        )
+
+    return ft.Container(
+        content=ft.Row(
+            controls=nav_items,
+            alignment=ft.MainAxisAlignment.SPACE_AROUND,
+        ),
+        height=NAV_BAR_HEIGHT,
+        bgcolor=colors["card"],
+        border=ft.border.only(top=ft.BorderSide(1, colors["border"])),
+    )
