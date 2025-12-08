@@ -17,6 +17,30 @@ Use `uv run main.py` to run the application with the virtual environment activat
 - **Task Runner**: Use `task flet:run` for development (includes proper cleanup)
 - **Background Processes**: When testing code changes, Flet may leave processes running. Check with `ps aux | grep flet` and clean up as needed.
 
+### Flet Platform Builds
+
+| Platform      | Python Runtime     | Package Compatibility           |
+|---------------|--------------------|---------------------------------|
+| Web (static)  | Pyodide (WASM)     | Very limited - pure Python only |
+| Web (dynamic) | Server-side Python | Full compatibility              |
+| Android/iOS   | Bundled CPython    | Most packages work              |
+| Desktop       | Native Python      | Full compatibility              |
+
+**Mobile caveats:**
+
+- C extensions must be compiled for ARM architecture
+- Some packages with native dependencies may need `--source-packages` flag
+- SQLite works natively on mobile
+
+**Build commands:**
+
+```bash
+task flet:build:web   # Static web (limited packages)
+task flet:build:apk   # Android
+task flet:build:ipa   # iOS (requires macOS + Xcode)
+task flet:build       # macOS (default)
+```
+
 ## Common Development Commands
 
 ### Package Management & Environment
