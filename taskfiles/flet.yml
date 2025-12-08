@@ -10,15 +10,66 @@ env:
   PUB_CACHE: "{{.ROOT_DIR}}/.cache/pub"
 
 vars:
-  BUILD_DIR: '{{.BUILD_DIR | default (printf "%s/build/macos" .ROOT_DIR)}}'
   APP_NAME: '{{.APP_NAME | default "Lunch"}}'
   APP_VERSION: '{{.APP_VERSION | default "0.1.0"}}'
   APP_DESCRIPTION: '{{.APP_DESCRIPTION | default "Restaurant lunch selector"}}'
   ORG_NAME: '{{.ORG_NAME | default "com.lunch"}}'
   BUNDLE_ID: '{{.BUNDLE_ID | default "com.lunch.app"}}'
   MACOS_ARCH: '{{.MACOS_ARCH | default "arm64"}}'
+  APP_PATH: '{{.ROOT_DIR}}/app'
+  BUILD_PLATFORM:
+    sh: |
+      if [[ -n "{{.CLI_ARGS}}" ]]; then
+        case "{{.CLI_ARGS}}" in
+          "web"|"macos"|"ipa"|"apk")
+            echo "{{.CLI_ARGS}}"
+            ;;
+          *)
+            echo "invalid" >&2
+            ;;
+        esac
+      else
+        echo "macos"
+      fi
+  BUILD_DIR: '{{.BUILD_DIR | default (printf "%s/app/build/%s" .ROOT_DIR .BUILD_PLATFORM)}}'
 
 tasks:
+  _build:
+    internal: true
+    desc: "Internal task to build Flet app for specified platform"
+    vars:
+      PLATFORM: '{{.PLATFORM | default "macos"}}'
+      EXTRA_ARGS: '{{.EXTRA_ARGS | default ""}}'
+    cmds:
+      - |
+        if [[ "{{.PLATFORM}}" == "invalid" ]]; then
+          echo "Invalid platform. Use: web, macos, ipa, or apk" >&2
+          exit 1
+        fi
+        echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for {{.PLATFORM}}..."
+        flet build {{.PLATFORM}} \
+          "{{.APP_PATH}}" \
+          --product "{{.APP_NAME}}" \
+          --description "{{.APP_DESCRIPTION}}" \
+          --org "{{.ORG_NAME}}" \
+          --build-version "{{.APP_VERSION}}" \
+          {{.EXTRA_ARGS}} \
+          --verbose
+
+  _run:
+    internal: true
+    desc: "Internal task to run Flet app for specified platform"
+    vars:
+      PLATFORM_FLAG: '{{.PLATFORM_FLAG | default ""}}'
+    cmds:
+      - |
+       flet run \
+          -a {{.APP_PATH}}/static \
+          {{.APP_PATH}}/main.py \
+          {{.PLATFORM_FLAG}}
+    interactive: true
+    silent: true
+
   info:
     desc: "Show build configuration"
     cmds:
@@ -30,22 +81,30 @@ tasks:
           Description: {{.APP_DESCRIPTION}}
           Organization: {{.ORG_NAME}}
           Bundle ID: {{.BUNDLE_ID}}
-          Architecture: {{.MACOS_ARCH}}
-          Build Directory: {{.BUILD_DIR}}
+          macOS Architecture: {{.MACOS_ARCH}}
+          App Path: {{.APP_PATH}}
 
         Available build targets:
-          - build: Build for {{.MACOS_ARCH}} (default)
-          - build-clean: Build with cleared cache (slower but thorough)
-          - build-universal: Build universal binary
-          - build-dmg: Create DMG installer
+          - build:web      Build static web app
+          - build:macos    Build macOS app (default)
+          - build:ipa      Build iOS app (requires macOS + Xcode)
+          - build:apk      Build Android APK
+          - build-clean    Build with cleared cache
+          - build-dmg      Create DMG installer (macOS)
+
+        Run targets:
+          - run:web        Run web app (server-side Python)
+          - run            Run desktop app
+          - run:ios        Run iOS simulator
+          - run:android    Run Android device/emulator
         EOF
     silent: true
 
   clean:
     desc: "Clean build artifacts and package caches"
     cmds:
-      - rm -rf {{.ROOT_DIR}}/build
-      - rm -rf {{.ROOT_DIR}}/cache
+      - rm -rf {{.ROOT_DIR}}/app/build
+      - rm -rf {{.ROOT_DIR}}/.cache
     silent: true
 
   build-clean:
@@ -53,47 +112,51 @@ tasks:
     deps:
       - clean
     cmds:
-      - |
-        echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for macOS ({{.MACOS_ARCH}}) with cleared cache..."
-        flet build macos \
-          "{{.ROOT_DIR}}" \
-          --product "{{.APP_NAME}}" \
-          --description "{{.APP_DESCRIPTION}}" \
-          --bundle-id "{{.BUNDLE_ID}}" \
-          --build-version "{{.APP_VERSION}}" \
-          --arch "{{.MACOS_ARCH}}" \
-          --compile-app \
-          --compile-packages \
-          --cleanup-app \
-          --cleanup-packages \
-          --clear-cache \
-          --verbose
+      - task: _build
+        vars:
+          PLATFORM: macos
+          EXTRA_ARGS: "--arch {{.MACOS_ARCH}} --compile-app --compile-packages --cleanup-app --cleanup-packages --clear-cache"
+
+  build:web:
+    desc: "Build static web app (limited package support)"
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: web
 
   build:
-    desc: "Build Flet app for macOS"
+    desc: "Build Flet app (use build:PLATFORM for specific targets)"
+    aliases: ["build:macos"]
     cmds:
-      - |
-        echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for macOS ({{.MACOS_ARCH}})..."
-        flet build macos \
-          "{{.ROOT_DIR}}" \
-          --product "{{.APP_NAME}}" \
-          --description "{{.APP_DESCRIPTION}}" \
-          --bundle-id "{{.BUNDLE_ID}}" \
-          --build-version "{{.APP_VERSION}}" \
-          --arch "{{.MACOS_ARCH}}" \
-          --verbose
+      - task: _build
+        vars:
+          PLATFORM: macos
+          EXTRA_ARGS: "--arch {{.MACOS_ARCH}}"
     sources:
-      - "{{.ROOT_DIR}}/*.py"
-      - "{{.ROOT_DIR}}/utils/**/*.py"
+      - "{{.APP_PATH}}/**/*.py"
       - "{{.ROOT_DIR}}/pyproject.toml"
       - "{{.ROOT_DIR}}/uv.lock"
-    generates:
-      - "{{.BUILD_DIR}}/{{.APP_NAME}}.app/**/*"
+
+  build:ipa:
+    desc: "Build iOS app (requires macOS + Xcode)"
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: ipa
+
+  build:apk:
+    desc: "Build Android APK"
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: apk
 
   build-dmg:
     desc: "Create DMG installer for macOS"
     deps:
       - build
+    vars:
+      MACOS_BUILD_DIR: '{{.ROOT_DIR}}/app/build/macos'
     cmds:
       - |
         echo "Creating DMG installer..."
@@ -105,55 +168,52 @@ tasks:
           --icon "{{.APP_NAME}}.app" 175 190 \
           --hide-extension "{{.APP_NAME}}.app" \
           --app-drop-link 425 190 \
-          "{{.BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg" \
-          "{{.BUILD_DIR}}/{{.APP_NAME}}.app"
+          "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg" \
+          "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app"
     sources:
-      - "{{.BUILD_DIR}}/{{.APP_NAME}}.app/**/*"
+      - "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app/**/*"
     generates:
-      - "{{.BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
+      - "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
     status:
-      - test -f "{{.BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
+      - test -f "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
 
-  run:
-    desc: "Run the Flet app in development mode"
-    cmds:
-      - |
-        flet run \
-          -a {{.ROOT_DIR}}/app/static \
-          {{.ROOT_DIR}}/app/main.py
-    interactive: true
-    silent: true
-
-  web:
-    desc: "Run the Flet app in web mode"
+  run:web:
+    desc: "Run the Flet app in web mode (server-side Python)"
     env:
       FLET_WEB_RENDERER: canvaskit
+      FLET_WEB_NO_CDN: true
     cmds:
-      - |
-        flet run \
-          -a {{.ROOT_DIR}}/app/static \
-          --web \
-          {{.ROOT_DIR}}/app/main.py
-    interactive: true
-    silent: true
+      - task: _run
+        vars:
+          PLATFORM_FLAG: "--web"
 
-  ios:
-    desc: "Run the Flet app in iOS mode"
+  run:
+    desc: "Run the Flet app in desktop mode"
     cmds:
-      - |
-        flet run \
-          -a {{.ROOT_DIR}}/app/static \
-          --ios \
-          {{.ROOT_DIR}}/app/main.py
-    interactive: true
-    silent: true
+      - task: _run
+
+  run:ios:
+    desc: "Run the Flet app in iOS simulator"
+    cmds:
+      - task: _run
+        vars:
+          PLATFORM_FLAG: "--ios"
+
+  run:android:
+    desc: "Run the Flet app on Android device/emulator"
+    cmds:
+      - task: _run
+        vars:
+          PLATFORM_FLAG: "--android"
 
   test-build:
     desc: "Test the built macOS app"
+    vars:
+      MACOS_BUILD_DIR: '{{.ROOT_DIR}}/app/build/macos'
     cmds:
-      - open "{{.BUILD_DIR}}/{{.APP_NAME}}.app"
+      - open "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app"
     preconditions:
-      - test -d "{{.BUILD_DIR}}/{{.APP_NAME}}.app"
+      - test -d "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app"
 
   check-deps:
     desc: "Check if build dependencies are installed"
