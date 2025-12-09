@@ -3,12 +3,32 @@
 """FastHTML web application for restaurant selection."""
 
 import contextlib
+import os
 import sys
 from pathlib import Path
 
-# Add project root to path for direct execution
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
+
+def get_base_path() -> Path:
+    """Get the base path for the application.
+
+    When running as a PyInstaller bundle, returns the path to the
+    temporary directory where files are extracted (sys._MEIPASS).
+    Otherwise returns the project root directory.
+    """
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parent.parent
+
+
+def is_frozen() -> bool:
+    """Check if running as a PyInstaller bundle."""
+    return getattr(sys, 'frozen', False)
+
+
+# Add project root to path for direct execution (not needed when frozen)
+if not is_frozen():
+    project_root = Path(__file__).parent.parent
+    sys.path.insert(0, str(project_root))
 
 from app.backend.db import (
     add_restaurant_to_db,
@@ -22,7 +42,7 @@ from fasthtml.common import *
 from urllib.parse import quote
 
 PORT = config('PORT', default=8080, cast=int)
-RELOAD = config('RELOAD', default=True, cast=bool)
+RELOAD = config('RELOAD', default=True, cast=bool) and not is_frozen()
 
 # Local assets only - no CDN (works offline)
 hdrs = (
@@ -33,7 +53,8 @@ hdrs = (
     Script(src="js/basecoat/basecoat.min.js", defer=True),
 )
 
-static_dir = Path(__file__).parent / "static"
+# Static directory: use _MEIPASS when frozen, otherwise relative to source
+static_dir = get_base_path() / "app" / "static"
 
 application, rt = fast_app(
     static_path=str(static_dir),
@@ -320,7 +341,15 @@ def post_delete(name: str):
     with contextlib.suppress(ValueError):
         delete_restaurant_from_db(name)
     return list_view()
-    return list_view()
+
+
+@rt('/shutdown', methods=['POST'])
+def post_shutdown():
+    """Shutdown endpoint for Tauri sidecar lifecycle management.
+
+    Only responds to localhost requests. Exits the process cleanly.
+    """
+    os._exit(0)
 
 
 create_db_and_tables()
@@ -328,4 +357,10 @@ create_db_and_tables()
 # * serve() is only called when this module runs as __main__ (direct execution)
 # * When uvicorn imports app.main:application for reload, it skips this
 if __name__ == '__main__':
-    serve(appname='app.main', app='application', port=PORT)
+    if is_frozen():
+        # When frozen, run uvicorn directly with the app object (no reload possible)
+        import uvicorn
+        uvicorn.run(application, host='0.0.0.0', port=PORT)
+    else:
+        # Development: use serve() with reload support
+        serve(appname='app.main', app='application', port=PORT, reload=RELOAD)

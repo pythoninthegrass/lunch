@@ -1,0 +1,238 @@
+version: "3.0"
+
+set: ['e', 'u', 'pipefail']
+shopt: ['globstar']
+
+env:
+  PIP_INDEX_URL: "https://pypi.org/simple"
+  PIP_EXTRA_INDEX_URL: "https://pypi.flet.dev"
+  PIP_CACHE_DIR: "{{.ROOT_DIR}}/.cache/pip"
+  PUB_CACHE: "{{.ROOT_DIR}}/.cache/pub"
+
+vars:
+  APP_NAME: '{{.APP_NAME | default "Lunch"}}'
+  APP_VERSION: '{{.APP_VERSION | default "0.1.0"}}'
+  APP_DESCRIPTION: '{{.APP_DESCRIPTION | default "Restaurant lunch selector"}}'
+  ORG_NAME: '{{.ORG_NAME | default "com.lunch"}}'
+  BUNDLE_ID: '{{.BUNDLE_ID | default "com.lunch.app"}}'
+  MACOS_ARCH: '{{.MACOS_ARCH | default "arm64"}}'
+  APP_PATH: '{{.ROOT_DIR}}/app'
+  BUILD_PLATFORM:
+    sh: |
+      if [[ -n "{{.CLI_ARGS}}" ]]; then
+        case "{{.CLI_ARGS}}" in
+          "web"|"macos"|"ipa"|"apk")
+            echo "{{.CLI_ARGS}}"
+            ;;
+          *)
+            echo "invalid" >&2
+            ;;
+        esac
+      else
+        echo "macos"
+      fi
+  BUILD_DIR: '{{.BUILD_DIR | default (printf "%s/app/build/%s" .ROOT_DIR .BUILD_PLATFORM)}}'
+
+tasks:
+  _build:
+    internal: true
+    desc: "Internal task to build Flet app for specified platform"
+    vars:
+      PLATFORM: '{{.PLATFORM | default "macos"}}'
+      EXTRA_ARGS: '{{.EXTRA_ARGS | default ""}}'
+    cmds:
+      - |
+        if [[ "{{.PLATFORM}}" == "invalid" ]]; then
+          echo "Invalid platform. Use: web, macos, ipa, or apk" >&2
+          exit 1
+        fi
+        echo "Building {{.APP_NAME}} v{{.APP_VERSION}} for {{.PLATFORM}}..."
+        flet build {{.PLATFORM}} \
+          "{{.APP_PATH}}" \
+          --product "{{.APP_NAME}}" \
+          --description "{{.APP_DESCRIPTION}}" \
+          --org "{{.ORG_NAME}}" \
+          --build-version "{{.APP_VERSION}}" \
+          {{.EXTRA_ARGS}} \
+          --verbose
+
+  _run:
+    internal: true
+    desc: "Internal task to run Flet app for specified platform"
+    vars:
+      PLATFORM_FLAG: '{{.PLATFORM_FLAG | default ""}}'
+    cmds:
+      - |
+       flet run \
+          -a {{.APP_PATH}}/static \
+          {{.APP_PATH}}/main.py \
+          {{.PLATFORM_FLAG}}
+    interactive: true
+    silent: true
+
+  info:
+    desc: "Show build configuration"
+    cmds:
+      - |
+        cat << EOF
+        Build Configuration:
+          App Name: {{.APP_NAME}}
+          Version: {{.APP_VERSION}}
+          Description: {{.APP_DESCRIPTION}}
+          Organization: {{.ORG_NAME}}
+          Bundle ID: {{.BUNDLE_ID}}
+          macOS Architecture: {{.MACOS_ARCH}}
+          App Path: {{.APP_PATH}}
+
+        Available build targets:
+          - build:web      Build static web app
+          - build:macos    Build macOS app (default)
+          - build:ipa      Build iOS app (requires macOS + Xcode)
+          - build:apk      Build Android APK
+          - build-clean    Build with cleared cache
+          - build-dmg      Create DMG installer (macOS)
+
+        Run targets:
+          - run:web        Run web app (server-side Python)
+          - run            Run desktop app
+          - run:ios        Run iOS simulator
+          - run:android    Run Android device/emulator
+        EOF
+    silent: true
+
+  clean:
+    desc: "Clean build artifacts and package caches"
+    cmds:
+      - rm -rf {{.ROOT_DIR}}/app/build
+      - rm -rf {{.ROOT_DIR}}/.cache
+    silent: true
+
+  build-clean:
+    desc: "Clean build and rebuild with cleared cache"
+    deps:
+      - clean
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: macos
+          EXTRA_ARGS: "--arch {{.MACOS_ARCH}} --compile-app --compile-packages --cleanup-app --cleanup-packages --clear-cache"
+
+  build:web:
+    desc: "Build static web app (limited package support)"
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: web
+
+  build:
+    desc: "Build Flet app (use build:PLATFORM for specific targets)"
+    aliases: ["build:macos"]
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: macos
+          EXTRA_ARGS: "--arch {{.MACOS_ARCH}}"
+    sources:
+      - "{{.APP_PATH}}/**/*.py"
+      - "{{.ROOT_DIR}}/pyproject.toml"
+      - "{{.ROOT_DIR}}/uv.lock"
+
+  build:ipa:
+    desc: "Build iOS app (requires macOS + Xcode)"
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: ipa
+
+  build:apk:
+    desc: "Build Android APK"
+    cmds:
+      - task: _build
+        vars:
+          PLATFORM: apk
+
+  build-dmg:
+    desc: "Create DMG installer for macOS"
+    deps:
+      - build
+    vars:
+      MACOS_BUILD_DIR: '{{.ROOT_DIR}}/app/build/macos'
+    cmds:
+      - |
+        echo "Creating DMG installer..."
+        create-dmg \
+          --volname "{{.APP_NAME}}" \
+          --window-pos 200 120 \
+          --window-size 600 400 \
+          --icon-size 100 \
+          --icon "{{.APP_NAME}}.app" 175 190 \
+          --hide-extension "{{.APP_NAME}}.app" \
+          --app-drop-link 425 190 \
+          "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg" \
+          "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app"
+    sources:
+      - "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app/**/*"
+    generates:
+      - "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
+    status:
+      - test -f "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}-{{.APP_VERSION}}-{{.MACOS_ARCH}}.dmg"
+
+  run:web:
+    desc: "Run the Flet app in web mode (server-side Python)"
+    env:
+      FLET_WEB_RENDERER: canvaskit
+      FLET_WEB_NO_CDN: true
+    cmds:
+      - task: _run
+        vars:
+          PLATFORM_FLAG: "--web"
+
+  run:
+    desc: "Run the Flet app in desktop mode"
+    cmds:
+      - task: _run
+
+  run:ios:
+    desc: "Run the Flet app in iOS simulator"
+    cmds:
+      - task: _run
+        vars:
+          PLATFORM_FLAG: "--ios"
+
+  run:android:
+    desc: "Run the Flet app on Android device/emulator"
+    cmds:
+      - task: _run
+        vars:
+          PLATFORM_FLAG: "--android"
+
+  test-build:
+    desc: "Test the built macOS app"
+    vars:
+      MACOS_BUILD_DIR: '{{.ROOT_DIR}}/app/build/macos'
+    cmds:
+      - open "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app"
+    preconditions:
+      - test -d "{{.MACOS_BUILD_DIR}}/{{.APP_NAME}}.app"
+
+  check-deps:
+    desc: "Check if build dependencies are installed"
+    cmds:
+      - |
+        echo "Checking build dependencies..."
+        if ! command -v flet &> /dev/null; then
+          echo "❌ flet CLI not found. Install with: pip install flet"
+          exit 1
+        fi
+        if ! command -v create-dmg &> /dev/null; then
+          echo "⚠️  create-dmg not found. Install with: brew install create-dmg"
+          echo "   (DMG creation will be skipped)"
+        fi
+        echo "✅ Build dependencies satisfied"
+    silent: true
+
+  doctor:
+    desc: "Run Flutter doctor to check development environment"
+    cmds:
+      - flutter doctor
+    interactive: true

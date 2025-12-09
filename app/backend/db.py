@@ -1,12 +1,48 @@
 import csv
+import os
 import random
 import sqlite3
+import sys
 from datetime import datetime
 from pathlib import Path
 
-# Define paths
-db_path = Path(__file__).parent.parent / "data" / "lunch.db"
-restaurants_csv = Path(__file__).parent.parent / "data" / "lunch_list.csv"
+
+def get_base_path() -> Path:
+    """Get the base path for bundled data files.
+
+    When running as a PyInstaller bundle, returns sys._MEIPASS.
+    Otherwise returns the project root directory.
+    """
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return Path(sys._MEIPASS)
+    return Path(__file__).parent.parent.parent
+
+
+def get_user_data_dir() -> Path:
+    """Get the user data directory for persistent storage (database).
+
+    When running as a PyInstaller bundle, uses platform-specific user data dir.
+    Otherwise uses the local app/data directory for development.
+    """
+    if getattr(sys, 'frozen', False):
+        # Use platform-specific user data directory for packaged app
+        if sys.platform == 'darwin':
+            data_dir = Path.home() / 'Library' / 'Application Support' / 'Lunch'
+        elif sys.platform == 'win32':
+            data_dir = Path(os.environ.get('APPDATA', Path.home())) / 'Lunch'
+        else:
+            data_dir = Path.home() / '.local' / 'share' / 'lunch'
+        data_dir.mkdir(parents=True, exist_ok=True)
+        return data_dir
+    # Development: use local app/data directory
+    return Path(__file__).parent.parent / 'data'
+
+
+# Database path: user data dir (writable)
+db_path = get_user_data_dir() / "lunch.db"
+
+# CSV seed data: bundled with app (read-only)
+restaurants_csv = get_base_path() / "app" / "data" / "lunch_list.csv"
 
 
 def create_db_and_tables():
