@@ -125,6 +125,7 @@ The project is configured for pytest with markers for unit, integration, e2e, an
   - flet-dev/flet
   - itamarst/eliot
   - pydantic/pydantic-ai
+  - rohanadwankar/oxdraw
   - taskfile_dev
   - websites/basecoatui_com
 

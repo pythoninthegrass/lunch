@@ -390,6 +390,7 @@ class LunchGUI:
                     ft.Radio(value="Normal", label="Normal"),
                 ],
                 spacing=SPACING["lg"],
+                alignment=ft.MainAxisAlignment.CENTER,
             ),
             value="Normal",
         )
@@ -404,15 +405,10 @@ class LunchGUI:
             ),
         )
 
-        return ft.Container(
+        # Form content with constrained width
+        form_content = ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(
-                        "Add Restaurant",
-                        size=24,
-                        weight=ft.FontWeight.BOLD,
-                    ),
-                    ft.Container(height=SPACING["lg"]),
                     self.add_name_field,
                     self.add_warning_text,
                     ft.Container(height=SPACING["md"]),
@@ -423,8 +419,26 @@ class LunchGUI:
                     ft.Container(height=SPACING["md"]),
                     self.add_feedback_text,
                 ],
-                horizontal_alignment=ft.CrossAxisAlignment.START,
-                scroll=ft.ScrollMode.AUTO,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+            width=400,
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(expand=True),  # Spacer
+                    ft.Text(
+                        "Add Restaurant",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    ft.Container(height=SPACING["lg"]),
+                    form_content,
+                    ft.Container(expand=True),  # Spacer
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True,
             ),
             expand=True,
             visible=False,
@@ -484,34 +498,90 @@ class LunchGUI:
 
     def _create_list_view(self) -> ft.Container:
         """Create the list view showing all restaurants."""
-        # List container
-        self.restaurant_list = ft.ListView(
+        colors = self._get_colors()
+
+        # List container - uses Column with scroll, expands to fill available space
+        self.restaurant_list_column = ft.Column(
             controls=[],
-            spacing=SPACING["sm"],
-            padding=SPACING["sm"],
+            spacing=0,
+            scroll=ft.ScrollMode.AUTO,
+            expand=True,
+        )
+
+        # Scroll indicator (chevron down icon)
+        self.list_scroll_indicator = ft.Container(
+            content=ft.Icon(
+                ft.Icons.KEYBOARD_ARROW_DOWN,
+                color=colors["muted_foreground"],
+                size=20,
+            ),
+            alignment=ft.alignment.center,
+            visible=False,
+            padding=ft.padding.only(bottom=SPACING["sm"]),
+        )
+
+        # List content wrapper - expands to fill space, enables scrolling within bounds
+        self.list_content_wrapper = ft.Container(
+            content=ft.Column(
+                controls=[
+                    self.restaurant_list_column,
+                    self.list_scroll_indicator,
+                ],
+                spacing=0,
+                expand=True,
+            ),
+            border=ft.border.all(1, colors["border"]),
+            border_radius=BORDER_RADIUS["md"],
+            width=500,
             expand=True,
         )
 
         return ft.Container(
             content=ft.Column(
                 controls=[
+                    ft.Container(height=SPACING["xl"]),  # Fixed top margin
                     ft.Text(
                         "All Restaurants",
                         size=24,
                         weight=ft.FontWeight.BOLD,
                     ),
                     ft.Container(height=SPACING["md"]),
-                    ft.Container(
-                        content=self.restaurant_list,
-                        expand=True,
-                        border=ft.border.all(1, self._get_colors()["border"]),
-                        border_radius=BORDER_RADIUS["md"],
-                    ),
+                    self.list_content_wrapper,
                 ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 expand=True,
             ),
             expand=True,
             visible=False,
+        )
+
+    def _create_price_indicator(self, category: str) -> ft.Container:
+        """Create a price indicator with dollar signs that highlight green on hover.
+
+        Args:
+            category: "cheap" for single $, "Normal" for $$
+        """
+        colors = self._get_colors()
+        is_cheap = category.lower() == "cheap"
+        dollar_text = "$" if is_cheap else "$$"
+        tooltip = "Cheap" if is_cheap else "Normal"
+
+        text_control = ft.Text(
+            dollar_text,
+            color=colors["muted_foreground"],
+        )
+
+        def on_hover(e):
+            if e.data == "true":
+                text_control.color = ft.Colors.GREEN
+            else:
+                text_control.color = colors["muted_foreground"]
+            text_control.update()
+
+        return ft.Container(
+            content=text_control,
+            tooltip=tooltip,
+            on_hover=on_hover,
         )
 
     def _refresh_list_view(self):
@@ -522,20 +592,22 @@ class LunchGUI:
         try:
             restaurants = self.on_get_all_restaurants()
         except Exception as ex:
-            self.restaurant_list.controls = [ft.Text(f"Error: {ex}")]
+            self.restaurant_list_column.controls = [ft.Text(f"Error: {ex}")]
             return
 
         colors = self._get_colors()
 
         # Create list items with delete buttons
         items = []
-        for name, category in restaurants:
+        for i, (name, category) in enumerate(restaurants):
+            # Only add bottom border if not the last item
+            is_last = i == len(restaurants) - 1
             items.append(
                 ft.Container(
                     content=ft.Row(
                         controls=[
                             ft.Text(f"{name}", expand=True),
-                            ft.Text(f"({category})", color=colors["muted_foreground"]),
+                            self._create_price_indicator(category),
                             ft.IconButton(
                                 icon=ft.Icons.DELETE_OUTLINE,
                                 icon_color=colors["destructive"],
@@ -546,11 +618,15 @@ class LunchGUI:
                         alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
                     ),
                     padding=ft.padding.symmetric(horizontal=SPACING["md"], vertical=SPACING["sm"]),
-                    border=ft.border.only(bottom=ft.BorderSide(1, colors["border"])),
+                    border=ft.border.only(bottom=ft.BorderSide(1, colors["border"])) if not is_last else None,
                 )
             )
 
-        self.restaurant_list.controls = items
+        self.restaurant_list_column.controls = items
+
+        # Show scroll indicator when there are many items that likely need scrolling
+        # Using 12 as threshold since ~12 items fit in a typical viewport
+        self.list_scroll_indicator.visible = len(items) > 12
 
     def _on_delete_restaurant(self, name: str):
         """Handle delete restaurant click."""
@@ -576,15 +652,10 @@ class LunchGUI:
             on_change=self._on_system_theme_toggle,
         )
 
-        return ft.Container(
+        # Settings content with constrained width
+        settings_content = ft.Container(
             content=ft.Column(
                 controls=[
-                    ft.Text(
-                        "Settings",
-                        size=24,
-                        weight=ft.FontWeight.BOLD,
-                    ),
-                    ft.Container(height=SPACING["lg"]),
                     ft.Container(
                         content=ft.Column(
                             controls=[
@@ -623,6 +694,25 @@ class LunchGUI:
                         border_radius=BORDER_RADIUS["md"],
                     ),
                 ],
+            ),
+            width=400,
+        )
+
+        return ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Container(expand=True),  # Spacer
+                    ft.Text(
+                        "Settings",
+                        size=24,
+                        weight=ft.FontWeight.BOLD,
+                    ),
+                    ft.Container(height=SPACING["lg"]),
+                    settings_content,
+                    ft.Container(expand=True),  # Spacer
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True,
             ),
             expand=True,
             visible=False,

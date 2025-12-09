@@ -1,0 +1,58 @@
+graph TB
+    subgraph "Entry Point"
+        main["app/main.py<br/>async create_app(page)<br/>DatabaseManager wrapper<br/>DI hub for callbacks"]
+    end
+
+    subgraph "Frontend Layer"
+        subgraph "app/frontend/"
+            gui["gui.py<br/>LunchGUI class<br/>4 views: home, add, list, settings<br/>Bottom nav bar<br/>Dark/light theme toggle"]
+            theme["theme.py<br/>BasecoatTheme<br/>ColorPalette (17 tokens)<br/>SPACING, BORDER_RADIUS<br/>create_primary/outline/destructive_button"]
+        end
+    end
+
+    subgraph "Backend Layer"
+        subgraph "app/backend/"
+            service["service.py<br/>RestaurantService<br/>session_rolled_restaurants dict<br/>select_restaurant() round-robin<br/>lookup_info_sync() via thread"]
+            db["db.py<br/>SQLite Operations<br/>lunch_list, recent_lunch,<br/>restaurant_info tables<br/>calculate_lunch() avoids recent"]
+            agent["agent.py<br/>RestaurantSearchAgent<br/>pydantic-ai + DuckDuckGo<br/>Ollama/OpenRouter APIs<br/>RestaurantInfo dataclass"]
+            logging["logging.py<br/>Eliot structured logging<br/>_format_message()<br/>DEBUG via python-decouple"]
+        end
+    end
+
+    subgraph "Configuration"
+        config["app/config.py<br/>LLMConfig dataclass<br/>ollama/openrouter providers<br/>get_llm_config()<br/>validate_llm_config()<br/>CACHE_TTL_DAYS"]
+    end
+
+    subgraph "Data Layer"
+        data["app/data/lunch.db<br/>3 tables: lunch_list,<br/>recent_lunch, restaurant_info<br/>TTL-based cache expiration"]
+        csv["app/data/*.csv<br/>lunch_list.csv (18 restaurants)<br/>recent_lunch.csv (seed data)"]
+    end
+
+    subgraph "Static Assets"
+        static["app/static/<br/>banner.png, logo.png<br/>angry_pickle.ico<br/>lunch_*.png variants"]
+    end
+
+    %% Main connections
+    main --> gui
+    main --> service
+    main --> static
+
+    %% Frontend dependencies
+    gui --> theme
+    gui --> logging
+
+    %% Service layer
+    service --> db
+    service --> agent
+    service --> logging
+
+    %% Agent dependencies
+    agent --> config
+
+    %% Database
+    db --> data
+    db --> config
+    csv -.->|initial seed| db
+
+    %% Theme system
+    theme --> gui
