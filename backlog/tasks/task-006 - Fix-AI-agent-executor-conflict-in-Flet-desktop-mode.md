@@ -4,7 +4,7 @@ title: Fix AI agent executor conflict in Flet desktop mode
 status: Done
 assignee: []
 created_date: '2025-12-04 00:09'
-updated_date: '2025-12-04 16:45'
+updated_date: '2025-12-09 23:22'
 labels:
   - bug
   - flet
@@ -12,7 +12,7 @@ labels:
   - async
 dependencies: []
 priority: medium
-ordinal: 1000
+ordinal: 5000
 ---
 
 ## Description

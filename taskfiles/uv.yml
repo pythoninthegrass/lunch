@@ -19,7 +19,6 @@ tasks:
     desc: "Create a virtual environment"
     cmds:
       - uv venv
-    dir: "{{.ROOT_DIR}}"
     status:
       - test -d "{{.ROOT_DIR}}/{{.UV_PROJECT_ENVIRONMENT}}"
 
@@ -27,7 +26,6 @@ tasks:
     desc: "Install project dependencies"
     cmds:
       - uv pip install -r pyproject.toml --all-extras
-    dir: "{{.ROOT_DIR}}"
 
   lock:
     desc: "Update the project's lockfile."
@@ -37,7 +35,6 @@ tasks:
       If there are no changes to the project's dependencies, locking will have no effect unless the --upgrade flag is provided.
     cmds:
       - uv lock
-    dir: "{{.ROOT_DIR}}"
 
   sync:
     desc: "Sync dependencies with lockfile"
@@ -47,7 +44,6 @@ tasks:
       By default, an exact sync is performed: uv removes packages that are not declared as dependencies of the project.
     cmds:
       - uv sync --frozen
-    dir: "{{.ROOT_DIR}}"
 
   update-deps:
     desc: "Update dependencies"

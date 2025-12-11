@@ -4,14 +4,14 @@ title: Add LLM provider config for ollama and openrouter via env vars
 status: Done
 assignee: []
 created_date: '2025-12-02 23:53'
-updated_date: '2025-12-03 16:38'
+updated_date: '2025-12-09 23:22'
 labels:
   - feature
   - llm
   - config
 dependencies: []
 priority: medium
-ordinal: 1000
+ordinal: 7000
 ---
 
 ## Description

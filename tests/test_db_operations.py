@@ -47,7 +47,9 @@ class TestDatabaseOperations:
 
     def test_get_all_restaurants_empty(self, temp_db):
         """Test getting all restaurants from empty database."""
-        with patch('app.backend.db.db_path', temp_db):
+        # Patch both db_path and restaurants_csv to prevent auto-seeding
+        with patch('app.backend.db.db_path', temp_db), \
+             patch('app.backend.db.restaurants_csv', Path('/nonexistent/path.csv')):
             create_db_and_tables()
             result = get_all_restaurants()
             assert result == []

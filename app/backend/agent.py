@@ -5,6 +5,13 @@ Uses pydantic-ai with duckduckgo_search_tool to find restaurant details.
 """
 
 import asyncio
+import sys
+from pathlib import Path
+
+# Add project root to path for direct execution
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from app.backend.logging import start_action
 from app.config import LLMConfig, get_app_config, get_llm_config
 from dataclasses import dataclass

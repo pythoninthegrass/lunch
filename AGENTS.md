@@ -4,9 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running the Application
 
-Use `uv run main.py` to run the application with the virtual environment activated.
+### FastHTML (Web UI - Primary)
 
-### Flet Development Notes
+Use `uv run app/main.py` to run the FastHTML web application on `localhost:8080`.
+
+### Tauri Desktop App
+
+The application can be packaged as a native macOS desktop app using Tauri v2 with the FastHTML backend bundled as a PyInstaller sidecar.
+
+```bash
+task tauri:build:arm64   # Build for Apple Silicon
+task tauri:build:x64     # Build for Intel
+task tauri:dev           # Development mode
+task tauri:test-app      # Launch built app
+```
+
+**Architecture:**
+
+```text
+Tauri Shell
+├── Native Window (WebView) ◄──► Python Sidecar (FastHTML Server)
+│                            HTTP   localhost:8080
+```
+
+- Tauri spawns PyInstaller-bundled Python executable as sidecar
+- WebView loads FastHTML UI from `localhost:8080`
+- Graceful shutdown via POST to `/shutdown` endpoint
+
+**Build outputs:**
+
+- `.app`: `src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Lunch.app`
+- `.dmg`: `src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/Lunch_*.dmg`
+
+**Data storage:**
+
+- Development: `app/data/lunch.db`
+- Production (bundled): `~/Library/Application Support/Lunch/lunch.db`
+
+### Flet (Legacy)
 
 - **Process Management**: Flet processes can accumulate during development. Always kill Flet processes after testing:
   ```bash
@@ -107,11 +142,42 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 - **Pytest**: Testing framework (tests directory not yet implemented)
 - **Pre-commit**: Git hooks for code quality
 - **mise**: Tool version management
+- **Tauri v2**: Desktop app framework (Rust + WebView)
+- **PyInstaller**: Python bundler for sidecar executable
 
 ### Key Dependencies
 
-- **flet[all]**: GUI framework (Flutter for Python)
+- **fasthtml**: Server-side HTML framework (primary UI)
+- **uvicorn**: ASGI server for FastHTML
+- **pydantic-ai**: LLM agent framework
+- **flet[all]**: GUI framework (Flutter for Python) - legacy
 - **sqlmodel**: Database ORM (though currently using raw SQL)
+- **pyinstaller**: Bundles Python app for Tauri sidecar
+
+### Project Structure
+
+```text
+lunch/
+├── app/                    # Python application
+│   ├── main.py             # FastHTML entry point
+│   ├── backend/            # Database, services
+│   ├── frontend/           # UI components
+│   ├── static/             # Assets (logo, CSS)
+│   └── data/               # SQLite DB, seed CSV
+├── src-tauri/              # Tauri desktop wrapper
+│   ├── src/                # Rust source
+│   ├── bin/                # Sidecar binaries
+│   ├── icons/              # App icons
+│   └── tauri.conf.json     # Tauri config
+├── pyinstaller/            # PyInstaller config
+│   └── lunch.spec          # Build specification
+├── taskfiles/              # Task runner configs
+│   ├── tauri.yml           # Tauri/sidecar tasks
+│   ├── npm.yml             # npm tasks
+│   ├── uv.yml              # uv/Python tasks
+│   └── flet.yml            # Flet tasks (legacy)
+└── Taskfile.yml            # Main task entry point
+```
 
 ## Testing Strategy
 
@@ -128,6 +194,8 @@ The project is configured for pytest with markers for unit, integration, e2e, an
   - rohanadwankar/oxdraw
   - taskfile_dev
   - websites/basecoatui_com
+  - tauri-apps/tauri
+  - pyinstaller/pyinstaller
 
 <!-- BACKLOG.MD MCP GUIDELINES START -->
 

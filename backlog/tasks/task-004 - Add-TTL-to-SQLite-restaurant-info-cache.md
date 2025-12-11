@@ -4,14 +4,14 @@ title: Add TTL to SQLite restaurant info cache
 status: Done
 assignee: []
 created_date: '2025-12-02 23:53'
-updated_date: '2025-12-04 17:22'
+updated_date: '2025-12-09 23:22'
 labels:
   - feature
   - caching
 dependencies:
   - task-003
 priority: medium
-ordinal: 1000
+ordinal: 4000
 ---
 
 ## Description

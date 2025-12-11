@@ -11,11 +11,17 @@ env:
   VENV_DIR: "{{.ROOT_DIR}}/.venv"
   PATH: "{{.VENV_DIR}}/bin:{{.PATH}}"
 
+dir: "{{.ROOT_DIR}}"
+
 includes:
   docker:
     taskfile: ./taskfiles/docker.yml
-  flet:
-    taskfile: ./taskfiles/flet.yml
+  npm:
+    taskfile: ./taskfiles/npm.yml
+  pex:
+    taskfile: ./taskfiles/pex.yml
+  tauri:
+    taskfile: ./taskfiles/tauri.yml
   uv:
     taskfile: ./taskfiles/uv.yml
 
@@ -81,3 +87,18 @@ tasks:
             pyclean "${args[@]}"
             ;;
         esac
+
+  build:
+    desc: "Build Tauri app for current architecture"
+    cmds:
+      - task: tauri:build
+
+  build:arm64:
+    desc: "Build Tauri app for Apple Silicon (arm64)"
+    cmds:
+      - task: tauri:build:arm64
+
+  build:x64:
+    desc: "Build Tauri app for Intel (x86_64)"
+    cmds:
+      - task: tauri:build:x64

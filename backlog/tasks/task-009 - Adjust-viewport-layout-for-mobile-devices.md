@@ -4,14 +4,14 @@ title: Adjust viewport layout for mobile devices
 status: Done
 assignee: []
 created_date: '2025-12-04 17:53'
-updated_date: '2025-12-04 18:04'
+updated_date: '2025-12-09 23:22'
 labels:
   - ui
   - responsive
   - mobile
 dependencies: []
 priority: medium
-ordinal: 1000
+ordinal: 2000
 ---
 
 ## Description

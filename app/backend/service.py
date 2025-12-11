@@ -4,7 +4,14 @@ This module is decoupled from the frontend and handles all restaurant operations
 """
 
 import asyncio
+import sys
 import threading
+from pathlib import Path
+
+# Add project root to path for direct execution
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
+
 from app.backend.db import save_restaurant_info
 from app.backend.logging import setup_logging, start_action
 

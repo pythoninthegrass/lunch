@@ -4,13 +4,13 @@ title: 'Restructure project: move backend, frontend, static to app directory'
 status: Done
 assignee: []
 created_date: '2025-12-02 23:53'
-updated_date: '2025-12-03 15:32'
+updated_date: '2025-12-09 23:22'
 labels:
   - refactor
   - architecture
 dependencies: []
 priority: high
-ordinal: 1000
+ordinal: 8000
 ---
 
 ## Description

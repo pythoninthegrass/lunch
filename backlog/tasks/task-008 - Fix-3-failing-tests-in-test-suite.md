@@ -4,13 +4,13 @@ title: Fix 3 failing tests in test suite
 status: Done
 assignee: []
 created_date: '2025-12-04 17:33'
-updated_date: '2025-12-04 17:38'
+updated_date: '2025-12-09 23:22'
 labels:
   - bug
   - tests
 dependencies: []
 priority: high
-ordinal: 1000
+ordinal: 3000
 ---
 
 ## Description
