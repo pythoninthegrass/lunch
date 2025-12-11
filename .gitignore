@@ -307,3 +307,4 @@ vite.config.ts.timestamp-*
 # INCLUDE
 !**/*.example
 !**/.gitkeep
+!src-tauri/dist/index.html
