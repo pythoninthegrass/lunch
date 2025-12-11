@@ -95,6 +95,8 @@ tasks:
       - "{{.TAURI_DIR}}/Cargo.toml"
       - "{{.TAURI_DIR}}/tauri.conf.json"
       - "{{.SIDECAR_DIR}}/main*"
+      - "{{.ROOT_DIR}}/pyproject.toml"
+      - "{{.ROOT_DIR}}/uv.lock"
 
   build:arm64:
     desc: "Build Tauri app for Apple Silicon (arm64)"

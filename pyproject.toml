@@ -13,7 +13,6 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "certifi>=2025.7.14",
     "eliot>=1.17.5",
-    "flet>=0.28.3,<0.29.0",
     "httpx>=0.27.0,<1.0.0",
     "msgpack>=1.0.0",
     "nest-asyncio>=1.6.0",
@@ -30,7 +29,6 @@ dependencies = [
 dev = [
     "argcomplete<4.0.0,>=3.5.0",
     "deptry<1.0.0,>=0.23.0",
-    "flet[all]>=0.28.3,<0.29.0",
     "icecream<3.0.0,>=2.1.3",
     "ipython<9.0.0,>=8.27.0",
     "mypy<2.0.0,>=1.14.1",
@@ -106,17 +104,3 @@ exclude_lines = [
     "pass",
     "..."
 ]
-
-[tool.flet.app]
-module = "main"
-path = "app"
-# exclude = ["assets"] # --exclude
-
-[tool.flet.macos]
-build_arch = "arm64"
-entitlement."com.apple.security.app-sandbox" = true
-entitlement."com.apple.security.cs.allow-jit" = true
-entitlement."com.apple.security.network.client" = true
-entitlement."com.apple.security.network.server" = true
-entitlement."com.apple.security.files.user-selected.read-only" = true
-entitlement."com.apple.security.files.user-selected.read-write" = true

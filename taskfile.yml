@@ -16,8 +16,6 @@ dir: "{{.ROOT_DIR}}"
 includes:
   docker:
     taskfile: ./taskfiles/docker.yml
-  flet:
-    taskfile: ./taskfiles/flet.yml
   npm:
     taskfile: ./taskfiles/npm.yml
   pex:
