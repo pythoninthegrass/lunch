@@ -11,44 +11,39 @@ tasks:
     desc: "Install npm dependencies"
     cmds:
       - npm install
-    dir: "{{.ROOT_DIR}}"
     sources:
       - "{{.ROOT_DIR}}/package.json"
     generates:
       - "{{.ROOT_DIR}}/node_modules/**/*"
     status:
       - test -d "{{.ROOT_DIR}}/node_modules"
+    silent: true
 
   ci:
     desc: "Clean install npm dependencies (CI mode)"
     cmds:
       - npm ci
-    dir: "{{.ROOT_DIR}}"
 
   update:
     desc: "Update npm dependencies"
     cmds:
       - npm update
-    dir: "{{.ROOT_DIR}}"
 
   outdated:
     desc: "Check for outdated dependencies"
     cmds:
       - npm outdated || true
-    dir: "{{.ROOT_DIR}}"
     silent: true
 
   audit:
     desc: "Run security audit"
     cmds:
       - npm audit
-    dir: "{{.ROOT_DIR}}"
 
   audit-fix:
     desc: "Fix security vulnerabilities"
     cmds:
       - npm audit fix
-    dir: "{{.ROOT_DIR}}"
 
   clean:
     desc: "Clean npm artifacts"
@@ -67,7 +62,6 @@ tasks:
     desc: "List installed packages"
     cmds:
       - npm list --depth=0
-    dir: "{{.ROOT_DIR}}"
     silent: true
 
   check-deps:

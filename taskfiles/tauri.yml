@@ -82,6 +82,7 @@ tasks:
 
   build:
     desc: "Build Tauri app for current architecture"
+    deps: [":npm:install"]
     vars:
       CURRENT_TARGET: '{{if eq ARCH "arm64"}}{{.MACOS_ARM64_TARGET}}{{else}}{{.MACOS_X64_TARGET}}{{end}}'
     cmds:
@@ -97,6 +98,7 @@ tasks:
 
   build:arm64:
     desc: "Build Tauri app for Apple Silicon (arm64)"
+    deps: [":npm:install"]
     cmds:
       - task: sidecar:arm64
       - task: _build
@@ -110,6 +112,7 @@ tasks:
 
   build:x64:
     desc: "Build Tauri app for Intel (x86_64)"
+    deps: [":npm:install"]
     cmds:
       - task: sidecar:x64
       - task: _build
@@ -123,16 +126,15 @@ tasks:
 
   dev:
     desc: "Run Tauri in development mode"
+    deps: [":npm:install"]
     cmds:
       - npx tauri dev
-    dir: "{{.ROOT_DIR}}"
     interactive: true
 
   icons:
     desc: "Generate app icons from logo"
     cmds:
       - npx tauri icon {{.ROOT_DIR}}/app/static/logo.png
-    dir: "{{.ROOT_DIR}}"
     sources:
       - "{{.ROOT_DIR}}/app/static/logo.png"
     generates:
@@ -214,4 +216,3 @@ tasks:
     desc: "Run Tauri doctor to check environment"
     cmds:
       - npx tauri info
-    dir: "{{.ROOT_DIR}}"
