@@ -21,8 +21,8 @@ def get_base_path() -> Path:
 
 
 def is_frozen() -> bool:
-    """Check if running as a PyInstaller bundle."""
-    return getattr(sys, 'frozen', False)
+    """Check if running as a PyInstaller bundle or PEX executable."""
+    return getattr(sys, 'frozen', False) or os.environ.get('PEX') is not None
 
 
 # Add project root to path for direct execution (not needed when frozen)
@@ -43,6 +43,9 @@ from urllib.parse import quote
 
 PORT = config('PORT', default=8080, cast=int)
 RELOAD = config('RELOAD', default=True, cast=bool) and not is_frozen()
+
+# Theme state for Tauri polling
+current_theme = "light"
 
 # Local assets only - no CDN (works offline)
 hdrs = (
@@ -74,15 +77,31 @@ def theme_toggle_script():
         const useSystem = localStorage.getItem('useSystemTheme') !== 'false';
         const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
 
+        // Sync theme to server (for Tauri window theme polling)
+        const syncThemeToServer = (isDark) => {
+            const theme = isDark ? 'dark' : 'light';
+            fetch('/api/theme', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'theme=' + theme
+            }).catch(() => {});
+        };
+
+        let initialDark = false;
         if (useSystem) {
-            if (prefersDark) document.documentElement.classList.add('dark');
+            initialDark = prefersDark;
         } else if (stored === 'dark') {
+            initialDark = true;
+        }
+        if (initialDark) {
             document.documentElement.classList.add('dark');
         }
+        syncThemeToServer(initialDark);
 
         matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
             if (localStorage.getItem('useSystemTheme') !== 'false') {
                 document.documentElement.classList.toggle('dark', e.matches);
+                syncThemeToServer(e.matches);
             }
         });
 
@@ -91,6 +110,7 @@ def theme_toggle_script():
             document.documentElement.classList.toggle('dark', isDark);
             localStorage.setItem('themeMode', isDark ? 'dark' : 'light');
             localStorage.setItem('useSystemTheme', 'false');
+            syncThemeToServer(isDark);
         };
 
         window.setSystemTheme = (useSystem) => {
@@ -98,6 +118,7 @@ def theme_toggle_script():
             if (useSystem) {
                 const prefersDark = matchMedia('(prefers-color-scheme: dark)').matches;
                 document.documentElement.classList.toggle('dark', prefersDark);
+                syncThemeToServer(prefersDark);
             }
         };
     })();
@@ -219,6 +240,7 @@ def add_view(message=None):
             hx_target="#add-result",
             hx_swap="innerHTML",
             cls="add-form",
+            **{"hx-on::after-request": "this.reset()"},
         ),
         Div(message or "", id="add-result", cls="text-center"),
         cls="add-content",
@@ -244,10 +266,11 @@ def restaurant_card(name, option):
         Span(price, cls="px-2 font-semibold price-indicator", title=option.title()),
         Button(
             I(cls="fas fa-trash"),
+            type="button",
             cls="delete-btn",
             hx_post=f"/delete?name={quote(name)}",
             hx_target="#restaurant-list",
-            hx_confirm=f"Delete {name}?",
+            hx_swap="outerHTML",
         ),
         cls="restaurant-card",
     )
@@ -332,7 +355,12 @@ def post_roll(option: str):
 def post_add(name: str, option: str):
     try:
         add_restaurant_to_db(name, option)
-        return Span(f"Added restaurant: {name} ({option.title()})", cls="text-success")
+        return Span(
+            f"Added restaurant: {name} ({option.title()})",
+            id="add-success-msg",
+            cls="text-success",
+            **{"hx-on::load": "setTimeout(() => this.remove(), 5000)"},
+        )
     except ValueError:
         return Span(f"Restaurant '{name}' already exists!", cls="text-destructive")
 
@@ -350,6 +378,21 @@ def post_shutdown():
     Only responds to localhost requests. Exits the process cleanly.
     """
     os._exit(0)
+
+
+@rt('/api/theme', methods=['GET'])
+def get_theme():
+    """Return current theme for Tauri window sync."""
+    return current_theme
+
+
+@rt('/api/theme', methods=['POST'])
+def set_theme(theme: str):
+    """Set current theme (called by frontend JS)."""
+    global current_theme
+    if theme in ('light', 'dark'):
+        current_theme = theme
+    return current_theme
 
 
 create_db_and_tables()
