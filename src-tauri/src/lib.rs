@@ -72,10 +72,16 @@ pub fn run() {
                 println!("Waiting for server to start...");
                 if wait_for_server(port, 30) {
                     println!("Server is ready, navigating to http://localhost:{}", port);
-                    let _ = window.eval(&format!(
-                        "window.location.href = 'http://localhost:{}'",
-                        port
-                    ));
+                    // Use navigate_to_url for more reliable navigation
+                    let url = format!("http://localhost:{}", port);
+                    if let Err(e) = window.navigate(url.parse().unwrap()) {
+                        eprintln!("Failed to navigate: {}", e);
+                        // Fallback to eval if navigate fails
+                        let _ = window.eval(&format!(
+                            "window.location.href = 'http://localhost:{}'",
+                            port
+                        ));
+                    }
                 } else {
                     eprintln!("Server failed to start within timeout");
                 }
