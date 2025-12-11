@@ -45,50 +45,29 @@ tasks:
         EOF
     silent: true
 
-  _sidecar:
-    internal: true
-    desc: "Internal task to build Python sidecar"
-    vars:
-      TARGET_SUFFIX: '{{.TARGET_SUFFIX | default ""}}'
-    cmds:
-      - |
-        echo "Building Python sidecar..."
-        uv run pyinstaller pyinstaller/lunch.spec --distpath {{.SIDECAR_DIR}} --noconfirm
-        if [[ -n "{{.TARGET_SUFFIX}}" ]]; then
-          mv {{.SIDECAR_DIR}}/main {{.SIDECAR_DIR}}/main-{{.TARGET_SUFFIX}}
-        fi
-        echo "Sidecar built successfully"
-
   sidecar:
     desc: "Build Python sidecar for current architecture"
     cmds:
-      - task: _sidecar
+      - task: :pex:build
     sources:
       - "{{.ROOT_DIR}}/app/**/*.py"
       - "{{.ROOT_DIR}}/pyproject.toml"
-      - "{{.ROOT_DIR}}/pyinstaller/lunch.spec"
 
   sidecar:arm64:
     desc: "Build Python sidecar for Apple Silicon (arm64)"
     cmds:
-      - task: _sidecar
-        vars:
-          TARGET_SUFFIX: "{{.MACOS_ARM64_TARGET}}"
+      - task: :pex:build:arm64
     sources:
       - "{{.ROOT_DIR}}/app/**/*.py"
       - "{{.ROOT_DIR}}/pyproject.toml"
-      - "{{.ROOT_DIR}}/pyinstaller/lunch.spec"
 
   sidecar:x64:
     desc: "Build Python sidecar for Intel (x86_64)"
     cmds:
-      - task: _sidecar
-        vars:
-          TARGET_SUFFIX: "{{.MACOS_X64_TARGET}}"
+      - task: :pex:build:x64
     sources:
       - "{{.ROOT_DIR}}/app/**/*.py"
       - "{{.ROOT_DIR}}/pyproject.toml"
-      - "{{.ROOT_DIR}}/pyinstaller/lunch.spec"
 
   _build:
     internal: true
@@ -103,10 +82,13 @@ tasks:
 
   build:
     desc: "Build Tauri app for current architecture"
-    deps:
-      - sidecar
+    vars:
+      CURRENT_TARGET: '{{if eq ARCH "arm64"}}{{.MACOS_ARM64_TARGET}}{{else}}{{.MACOS_X64_TARGET}}{{end}}'
     cmds:
+      - task: sidecar
       - task: _build
+        vars:
+          TARGET: "{{.CURRENT_TARGET}}"
     sources:
       - "{{.TAURI_DIR}}/src/**/*.rs"
       - "{{.TAURI_DIR}}/Cargo.toml"
@@ -115,9 +97,8 @@ tasks:
 
   build:arm64:
     desc: "Build Tauri app for Apple Silicon (arm64)"
-    deps:
-      - sidecar:arm64
     cmds:
+      - task: sidecar:arm64
       - task: _build
         vars:
           TARGET: "{{.MACOS_ARM64_TARGET}}"
@@ -129,9 +110,8 @@ tasks:
 
   build:x64:
     desc: "Build Tauri app for Intel (x86_64)"
-    deps:
-      - sidecar:x64
     cmds:
+      - task: sidecar:x64
       - task: _build
         vars:
           TARGET: "{{.MACOS_X64_TARGET}}"
@@ -216,11 +196,11 @@ tasks:
           echo "uv version: $(uv --version)"
         fi
 
-        if ! command -v pyinstaller &> /dev/null; then
-          echo "pyinstaller not found. Install with: uv pip install pyinstaller"
+        if ! command -v pex &> /dev/null; then
+          echo "pex not found. Install with: uv pip install pex"
           missing=1
         else
-          echo "pyinstaller available"
+          echo "pex version: $(pex --version)"
         fi
 
         if [[ $missing -eq 0 ]]; then

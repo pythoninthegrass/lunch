@@ -14,14 +14,22 @@ env:
 includes:
   docker:
     taskfile: ./taskfiles/docker.yml
+    dir: "{{.ROOT_DIR}}"
   flet:
     taskfile: ./taskfiles/flet.yml
+    dir: "{{.ROOT_DIR}}"
   npm:
     taskfile: ./taskfiles/npm.yml
+    dir: "{{.ROOT_DIR}}"
+  pex:
+    taskfile: ./taskfiles/pex.yml
+    dir: "{{.ROOT_DIR}}"
   tauri:
     taskfile: ./taskfiles/tauri.yml
+    dir: "{{.ROOT_DIR}}"
   uv:
     taskfile: ./taskfiles/uv.yml
+    dir: "{{.ROOT_DIR}}"
 
 tasks:
   default:
@@ -85,3 +93,18 @@ tasks:
             pyclean "${args[@]}"
             ;;
         esac
+
+  build:
+    desc: "Build Tauri app for current architecture"
+    cmds:
+      - task: tauri:build
+
+  build:arm64:
+    desc: "Build Tauri app for Apple Silicon (arm64)"
+    cmds:
+      - task: tauri:build:arm64
+
+  build:x64:
+    desc: "Build Tauri app for Intel (x86_64)"
+    cmds:
+      - task: tauri:build:x64
