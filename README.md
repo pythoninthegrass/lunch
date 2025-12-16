@@ -42,14 +42,12 @@ uv run app/main.py
 Using [Task](https://taskfile.dev/) runner with predefined configurations:
 
 ```bash
-# Desktop app (development mode)
-task flet:run
+# Run FastHTML web server
+task web
 
-# Web browser mode
-task flet:web
-
-# iOS simulator
-task flet:ios
+# Build Tauri desktop app
+task tauri:build:arm64  # Apple Silicon
+task tauri:build:x64    # Intel
 ```
 
 ### Quit program
@@ -170,4 +168,5 @@ See [TODO.md](TODO.md).
 
 ## Further Reading
 
-* [flet](https://flet.dev/)
+* [FastHTML](https://fastht.ml/)
+* [Tauri](https://tauri.app/)

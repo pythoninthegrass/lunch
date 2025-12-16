@@ -46,8 +46,7 @@ class RestaurantService:
         Add a new restaurant to the database.
         Returns success message or raises exception.
 
-        Note: Info lookup should be triggered separately by the caller
-        using lookup_info_async() with page.run_task() for Flet apps.
+        Note: Info lookup should be triggered separately by the caller.
         """
         with start_action(action_type="add_restaurant", name=name, category=category):
             try:
@@ -59,11 +58,7 @@ class RestaurantService:
                 raise Exception(f"Error adding restaurant: {str(e)}") from e
 
     async def lookup_info_async(self, restaurant_name: str) -> None:
-        """Async restaurant info lookup using threading to avoid event loop conflicts.
-
-        This method runs the lookup in a separate thread with its own event loop
-        to avoid ThreadPoolExecutor conflicts with Flet desktop mode.
-        """
+        """Async restaurant info lookup using threading to avoid event loop conflicts."""
         import concurrent.futures
 
         def run_lookup():
@@ -75,11 +70,7 @@ class RestaurantService:
             await asyncio.wrap_future(executor.submit(run_lookup))
 
     def lookup_info_sync(self, restaurant_name: str) -> None:
-        """Sync restaurant info lookup - call with page.run_thread().
-
-        This method runs in a separate thread via Flet's page.run_thread(),
-        creating its own event loop isolated from Flet's async context.
-        """
+        """Sync restaurant info lookup."""
         from app.backend.agent import lookup_restaurant_info
         from eliot import log_message
 
@@ -103,7 +94,7 @@ class RestaurantService:
                 log_message(message_type="bg_lookup_error", error=str(e))
 
     def _lookup_info_background(self, restaurant_name: str) -> None:
-        """Legacy sync background lookup for non-Flet contexts (e.g., tests)."""
+        """Legacy sync background lookup (e.g., for tests)."""
         from app.backend.agent import lookup_restaurant_info
         from eliot import log_message
 

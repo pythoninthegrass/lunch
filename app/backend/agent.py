@@ -190,9 +190,6 @@ Return only factual info from search results."""
         """
         Sync wrapper for search_async using a separate thread with isolated httpx client.
 
-        In Flet desktop mode, the global ThreadPoolExecutor gets shut down.
-        We run the async search in a separate thread with httpx configured to avoid threading.
-
         Args:
             restaurant_name: Name of the restaurant to search for
 
@@ -203,8 +200,6 @@ Return only factual info from search results."""
         import httpx
         import threading
 
-        # Create a new event loop in a separate thread to avoid
-        # ThreadPoolExecutor conflicts with Flet's desktop mode
         def run_in_thread():
             # Create a new event loop for this thread
             loop = asyncio.new_event_loop()
@@ -251,9 +246,6 @@ def lookup_restaurant_info(restaurant_name: str) -> RestaurantInfo | None:
     """
     Sync convenience function with default config.
 
-    For Flet desktop mode, we use a simplified synchronous approach
-    to avoid ThreadPoolExecutor conflicts.
-
     Args:
         restaurant_name: Name of the restaurant
 
@@ -269,7 +261,6 @@ def lookup_restaurant_info(restaurant_name: str) -> RestaurantInfo | None:
 
     try:
         # Use a simple synchronous approach that doesn't rely on pydantic-ai
-        # This avoids the httpx ThreadPoolExecutor issues in Flet desktop mode
 
         # Get LLM config
         llm_config = get_llm_config()
@@ -361,7 +352,6 @@ If you cannot find specific information, use null for that field. Do not make up
 
         else:
             # For other providers, fall back to the pydantic-ai approach
-            # This may still have issues in Flet desktop mode
             log_message(message_type="lookup_info_fallback_provider", provider=llm_config.provider)
             agent = RestaurantSearchAgent(zip_code=app_config["zip_code"])
             log_message(message_type="lookup_info_agent_created")

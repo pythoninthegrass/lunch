@@ -1,13 +1,6 @@
 graph TB
     subgraph "Entry Point"
-        main["app/main.py<br/>async create_app(page)<br/>DatabaseManager wrapper<br/>DI hub for callbacks"]
-    end
-
-    subgraph "Frontend Layer"
-        subgraph "app/frontend/"
-            gui["gui.py<br/>LunchGUI class<br/>4 views: home, add, list, settings<br/>Bottom nav bar<br/>Dark/light theme toggle"]
-            theme["theme.py<br/>BasecoatTheme<br/>ColorPalette (17 tokens)<br/>SPACING, BORDER_RADIUS<br/>create_primary/outline/destructive_button"]
-        end
+        main["app/main.py<br/>FastHTML routes & UI<br/>DatabaseManager wrapper<br/>DI hub for service"]
     end
 
     subgraph "Backend Layer"
@@ -33,13 +26,9 @@ graph TB
     end
 
     %% Main connections
-    main --> gui
     main --> service
     main --> static
-
-    %% Frontend dependencies
-    gui --> theme
-    gui --> logging
+    main --> logging
 
     %% Service layer
     service --> db
@@ -53,6 +42,3 @@ graph TB
     db --> data
     db --> config
     csv -.->|initial seed| db
-
-    %% Theme system
-    theme --> gui

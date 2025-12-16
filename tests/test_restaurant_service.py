@@ -192,7 +192,7 @@ class TestRestaurantServiceBackgroundLookup:
     def test_add_restaurant_does_not_trigger_lookup(self, mock_db_manager):
         """Test that adding a restaurant does NOT trigger lookup directly.
 
-        The async lookup should be triggered by the caller (e.g., Flet's page.run_task()).
+        The async lookup should be triggered separately by the caller.
         """
         service = RestaurantService(mock_db_manager)
         result = service.add_restaurant("New Place", "Normal")

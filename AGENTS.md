@@ -41,41 +41,6 @@ Tauri Shell
 - Development: `app/data/lunch.db`
 - Production (bundled): `~/Library/Application Support/Lunch/lunch.db`
 
-### Flet (Legacy)
-
-- **Process Management**: Flet processes can accumulate during development. Always kill Flet processes after testing:
-  ```bash
-  pkill -f flet
-  # or
-  killall flet
-  ```
-- **Task Runner**: Use `task flet:run` for development (includes proper cleanup)
-- **Background Processes**: When testing code changes, Flet may leave processes running. Check with `ps aux | grep flet` and clean up as needed.
-
-### Flet Platform Builds
-
-| Platform      | Python Runtime     | Package Compatibility           |
-|---------------|--------------------|---------------------------------|
-| Web (static)  | Pyodide (WASM)     | Very limited - pure Python only |
-| Web (dynamic) | Server-side Python | Full compatibility              |
-| Android/iOS   | Bundled CPython    | Most packages work              |
-| Desktop       | Native Python      | Full compatibility              |
-
-**Mobile caveats:**
-
-- C extensions must be compiled for ARM architecture
-- Some packages with native dependencies may need `--source-packages` flag
-- SQLite works natively on mobile
-
-**Build commands:**
-
-```bash
-task flet:build:web   # Static web (limited packages)
-task flet:build:apk   # Android
-task flet:build:ipa   # iOS (requires macOS + Xcode)
-task flet:build       # macOS (default)
-```
-
 ## Common Development Commands
 
 ### Package Management & Environment
@@ -108,12 +73,14 @@ task flet:build       # macOS (default)
 
 ## Project Architecture
 
-This is a Python desktop application built with Flet (Flutter for Python) for restaurant selection.
+This is a Python web application built with FastHTML for restaurant selection.
 
 ### Core Components
 
-- **main.py**: Main application entry point containing the Flet GUI
-- **utils/db.py**: Database operations using SQLite with manual SQL queries
+- **main.py**: Main application entry point containing FastHTML routes and UI
+- **backend/db.py**: Database operations using SQLite with manual SQL queries
+- **backend/service.py**: Business logic layer for restaurant management
+- **backend/agent.py**: AI agent for restaurant info lookup using pydantic-ai
 - **data/**: Contains SQLite database and CSV data files
 - **static/**: Application assets (icons, images)
 
@@ -121,12 +88,13 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 
 - **lunch_list table**: Stores restaurants with their categories (cheap/Normal)
 - **recent_lunch table**: Tracks the last 14 restaurant selections for round-robin logic
+- **restaurant_info table**: Caches AI-fetched restaurant details
 
 ### Application Logic
 
 - Round-robin restaurant selection to avoid repetition
 - Category-based filtering (cheap vs Normal restaurants)
-- GUI allows adding/deleting restaurants dynamically
+- Web UI allows adding/deleting restaurants dynamically
 - Recent selection tracking prevents same restaurant appearing too frequently
 
 ### Configuration
@@ -139,7 +107,7 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 ### Development Tools
 
 - **Ruff**: Linting and formatting (replaces black, isort, flake8)
-- **Pytest**: Testing framework (tests directory not yet implemented)
+- **Pytest**: Testing framework
 - **Pre-commit**: Git hooks for code quality
 - **mise**: Tool version management
 - **Tauri v2**: Desktop app framework (Rust + WebView)
@@ -150,7 +118,6 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 - **fasthtml**: Server-side HTML framework (primary UI)
 - **uvicorn**: ASGI server for FastHTML
 - **pydantic-ai**: LLM agent framework
-- **flet[all]**: GUI framework (Flutter for Python) - legacy
 - **sqlmodel**: Database ORM (though currently using raw SQL)
 - **pyinstaller**: Bundles Python app for Tauri sidecar
 
@@ -160,8 +127,7 @@ This is a Python desktop application built with Flet (Flutter for Python) for re
 lunch/
 ├── app/                    # Python application
 │   ├── main.py             # FastHTML entry point
-│   ├── backend/            # Database, services
-│   ├── frontend/           # UI components
+│   ├── backend/            # Database, services, agent
 │   ├── static/             # Assets (logo, CSS)
 │   └── data/               # SQLite DB, seed CSV
 ├── src-tauri/              # Tauri desktop wrapper
@@ -174,8 +140,7 @@ lunch/
 ├── taskfiles/              # Task runner configs
 │   ├── tauri.yml           # Tauri/sidecar tasks
 │   ├── npm.yml             # npm tasks
-│   ├── uv.yml              # uv/Python tasks
-│   └── flet.yml            # Flet tasks (legacy)
+│   └── uv.yml              # uv/Python tasks
 └── Taskfile.yml            # Main task entry point
 ```
 
@@ -188,14 +153,12 @@ The project is configured for pytest with markers for unit, integration, e2e, an
 - Context7 mcp libraries
   - astral-sh/uv
   - astral-sh/ruff
-  - flet-dev/flet
   - itamarst/eliot
   - pydantic/pydantic-ai
   - rohanadwankar/oxdraw
   - taskfile_dev
   - websites/basecoatui_com
-  - tauri-apps/tauri
-  - pyinstaller/pyinstaller
+  - websites/v2_tauri_app
 
 <!-- BACKLOG.MD MCP GUIDELINES START -->
 
@@ -215,6 +178,7 @@ This project uses Backlog.md MCP for all task and project management activities.
 - **When to read it**: BEFORE creating tasks, or when you're unsure whether to track work
 
 These guides cover:
+
 - Decision framework for when to create tasks
 - Search-first workflow to avoid duplicates
 - Links to detailed guides for task creation, execution, and completion
